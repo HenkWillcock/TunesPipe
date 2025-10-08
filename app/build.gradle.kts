@@ -55,4 +55,5 @@ dependencies {
     // Mine
     implementation(libs.exoplayer)
     implementation(libs.newpipeextractor)
+    coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 }
