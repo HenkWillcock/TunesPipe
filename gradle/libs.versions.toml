@@ -27,6 +27,7 @@ androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navi
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
 
 exoplayer = "com.google.android.exoplayer:exoplayer:2.19.1"
+newpipeextractor = "com.github.TeamNewPipe:NewPipeExtractor:0.24.8"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

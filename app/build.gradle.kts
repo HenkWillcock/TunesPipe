@@ -54,5 +54,5 @@ dependencies {
 
     // Mine
     implementation(libs.exoplayer)
-//    implementation project(":extractor")
+    implementation(libs.newpipeextractor)
 }
