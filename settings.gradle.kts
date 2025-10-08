@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.maven
+
 pluginManagement {
     repositories {
         google {
@@ -9,6 +11,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven(url = "https://jitpack.io")
     }
 }
 dependencyResolutionManagement {
@@ -16,9 +19,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven(url = "https://jitpack.io")
     }
 }
 
 rootProject.name = "TunesPipe"
 include(":app")
- 
