@@ -14,13 +14,14 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.services.youtube.YoutubeService
-import com.example.tunespipe.DownloaderImpl
+import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.text.format
 import kotlin.text.maxByOrNull
 
 import android.util.Log
+import androidx.media3.common.MediaItem
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -49,9 +50,9 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         NewPipe.init(DownloaderImpl())
+        val exoPlayer: ExoPlayer = ExoPlayer.Builder(this).build()
         val youtubeService: StreamingService = NewPipe.getService(0)
 
-        // FIXME still crashing the thing.
         lifecycleScope.launch {
             val streamInfo = withContext(Dispatchers.IO) {
                 StreamInfo.getInfo(youtubeService, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -72,11 +73,23 @@ class MainActivity : AppCompatActivity() {
             val audioStream: AudioStream? = streamInfo.audioStreams.maxByOrNull { it.averageBitrate }
 
             if (audioStream != null) {
-                val streamUrl = audioStream.url
+                val streamUrl = audioStream.content
                 Log.d("TunesPipe", "Found audio stream!")
                 Log.d("TunesPipe", "Bitrate: ${audioStream.averageBitrate} kbps")
                 Log.d("TunesPipe", "Format: ${audioStream.format}")
                 Log.d("TunesPipe", "URL: $streamUrl")
+
+                // 1. Create a MediaItem from the stream URL
+                val mediaItem = MediaItem.fromUri(streamUrl)
+
+                // 2. Set the MediaItem on the player
+                exoPlayer.setMediaItem(mediaItem)
+
+                // 3. Prepare the player to start loading the media
+                exoPlayer.prepare()
+
+                // 4. Start playback
+                exoPlayer.play()
             } else {
                 Log.e("TunesPipe", "No audio streams found for this video.")
             }
