@@ -53,6 +53,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Mine
+    implementation(libs.okhttp3)
     implementation(libs.exoplayer)
     implementation(libs.newpipeextractor)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
