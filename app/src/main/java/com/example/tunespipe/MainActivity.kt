@@ -11,6 +11,7 @@ import com.example.tunespipe.databinding.ActivityMainBinding
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.services.youtube.YoutubeService
+import com.example.tunespipe.DownloaderImpl
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,5 +35,7 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        NewPipe.init(DownloaderImpl())
     }
 }

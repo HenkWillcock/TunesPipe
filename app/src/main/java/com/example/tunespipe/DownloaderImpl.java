@@ -31,8 +31,8 @@ public final class DownloaderImpl extends Downloader {
     private final Map<String, String> mCookies;
     private final OkHttpClient client;
 
-    private DownloaderImpl(final OkHttpClient.Builder builder) {
-        this.client = builder
+    public DownloaderImpl() {
+        this.client = new OkHttpClient.Builder()
                 .readTimeout(30, TimeUnit.SECONDS)
                 .build();
         this.mCookies = new HashMap<>();
