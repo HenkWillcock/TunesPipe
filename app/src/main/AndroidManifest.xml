@@ -25,4 +25,6 @@
         </activity>
     </application>
 
+    <service android:name=".MusicPlayerService" android:exported="false" />
+
 </manifest>
