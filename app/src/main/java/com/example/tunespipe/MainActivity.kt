@@ -10,20 +10,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
 import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-//import org.schabi.newpipe.extractor.downloader.Downloader
-//import org.schabi.newpipe.extractor.services.youtube.YoutubeService
-import androidx.media3.exoplayer.ExoPlayer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-import android.util.Log
-import androidx.media3.common.MediaItem
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.search.SearchInfo
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,12 +39,6 @@ class MainActivity : AppCompatActivity() {
         // Must be called on startup.
         NewPipe.init(DownloaderImpl())
         MusicPlayer.createPlayer(this)
-
-        // TODO
-        // Add iTunes search with a UI.
-        // https://itunes.apple.com/search?term=jack+johnson
-        // Once I can do that, everything else is just building an interface for the iTunes API.
-        // Playlists, Radio, Jams, etc.
 
         lifecycleScope.launch {
             MusicPlayer.playSongFromSearch("Never gonna give you up")

@@ -7,7 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.tunespipe.MusicPlayer
 import com.example.tunespipe.databinding.FragmentSearchBinding
+import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
 
@@ -24,16 +27,28 @@ class SearchFragment : Fragment() {
         return binding.root
     }
 
+    // TODO
+    // Add iTunes search with a UI.
+    // https://itunes.apple.com/search?term=jack+johnson
+    // Once I can do that, everything else is just building an interface for the iTunes API.
+    // Playlists, Radio, Jams, etc.
+
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             // This method is called when the user hits "enter" or the search button.
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                if (!query.isNullOrBlank()) {
-                    Log.d("SearchFragment", "Search submitted: $query")
+            override fun onQueryTextSubmit(queryString: String?): Boolean {
+                if (!queryString.isNullOrBlank()) {
+                    Log.d("SearchFragment", "Search submitted: $queryString")
+
                     // Prevent the SearchView from handling the event by itself
                     binding.searchView.clearFocus()
-                    // TODO: Here is where you will trigger the actual search
-                    // For example: searchViewModel.searchForSong(query)
+
+                    // TODO need to refactor so there's like a constant thread for playing the music.
+                    // Hitting playSongFromSearch just changes the song,
+                    // doesn't start a whole new process.
+                    lifecycleScope.launch {
+                        MusicPlayer.playSongFromSearch(queryString)
+                    }
                 }
                 return true
             }
