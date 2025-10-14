@@ -3,6 +3,7 @@ package com.example.tunespipe
 import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,10 +17,13 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 // A Singleton object to hold our ExoPlayer instance
 object MusicPlayer {
 
-    private var exoPlayer: ExoPlayer? = null
+    private var exoPlayer: Player? = null
 
-    fun createPlayer(context: Context) {
-        exoPlayer = ExoPlayer.Builder(context.applicationContext).build()
+    fun getOrCreatePlayer(context: Context): Player {
+        if (exoPlayer == null) {
+            exoPlayer = ExoPlayer.Builder(context.applicationContext).build()
+        }
+        return exoPlayer!!
     }
 
     suspend fun playSongFromSearch(searchQuery: String) {
