@@ -48,71 +48,18 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
+        // Must be called on startup.
         NewPipe.init(DownloaderImpl())
-        val exoPlayer: ExoPlayer = ExoPlayer.Builder(this).build()
-        val youtubeService: StreamingService = NewPipe.getService(0)
+        MusicPlayer.createPlayer(this)
 
         // TODO
         // Add iTunes search with a UI.
         // https://itunes.apple.com/search?term=jack+johnson
-
         // Once I can do that, everything else is just building an interface for the iTunes API.
         // Playlists, Radio, Jams, etc.
+
         lifecycleScope.launch {
-
-            val searchInfo = withContext(Dispatchers.IO) {
-                val handler = youtubeService.searchQHFactory.fromQuery(
-                    "Never gonna give you up",
-//                    listOf("music"),
-//                    "",  // TODO
-                )
-                SearchInfo.getInfo(youtubeService, handler)
-            }
-            val firstVideo = searchInfo.relatedItems.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
-            Log.d("TunesPipe", "First vid: $firstVideo")
-            val url = firstVideo?.url
-            Log.d("TunesPipe", "Heya mate, here's ya URL: $url")
-
-            val streamInfo = withContext(Dispatchers.IO) {
-                StreamInfo.getInfo(youtubeService, url)
-            }
-
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
-            // Log basic info from the successfully fetched stream
-            Log.d("TunesPipe", "Successfully fetched stream: ${streamInfo.name}")
-            Log.d("TunesPipe", "Uploader: ${streamInfo.uploaderName}")
-
-            // Get the audio stream with the highest bitrate for the best quality
-            val audioStream: AudioStream? = streamInfo.audioStreams.maxByOrNull { it.averageBitrate }
-
-            if (audioStream != null) {
-                val streamUrl = audioStream.content
-                Log.d("TunesPipe", "Found audio stream!")
-                Log.d("TunesPipe", "Bitrate: ${audioStream.averageBitrate} kbps")
-                Log.d("TunesPipe", "Format: ${audioStream.format}")
-                Log.d("TunesPipe", "URL: $streamUrl")
-
-                // 1. Create a MediaItem from the stream URL
-                val mediaItem = MediaItem.fromUri(streamUrl)
-
-                // 2. Set the MediaItem on the player
-                exoPlayer.setMediaItem(mediaItem)
-
-                // 3. Prepare the player to start loading the media
-                exoPlayer.prepare()
-
-                // 4. Start playback
-                exoPlayer.play()
-
-            } else {
-                Log.e("TunesPipe", "No audio streams found for this video.")
-            }
+            MusicPlayer.playSongFromSearch("Never gonna give you up")
         }
     }
 }
