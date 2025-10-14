@@ -1,7 +1,6 @@
 package com.example.tunespipe
 
 import android.os.Bundle
-import androidx.activity.result.launch
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -12,13 +11,12 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.downloader.Downloader
-import org.schabi.newpipe.extractor.services.youtube.YoutubeService
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
+//import org.schabi.newpipe.extractor.downloader.Downloader
+//import org.schabi.newpipe.extractor.services.youtube.YoutubeService
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.text.format
-import kotlin.text.maxByOrNull
 
 import android.util.Log
 import androidx.media3.common.MediaItem
@@ -53,6 +51,25 @@ class MainActivity : AppCompatActivity() {
         val exoPlayer: ExoPlayer = ExoPlayer.Builder(this).build()
         val youtubeService: StreamingService = NewPipe.getService(0)
 
+//        val search = youtubeService.getSearchExtractor(
+//            "Never gonna give you up",
+//            listOf("music"),
+//            "",  // TODO
+//        )
+//        search.fetchPage()
+//
+//        val items = search.initialPage.items
+//        val firstVideo = items.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
+//        val url = firstVideo?.url
+
+
+        // TODO, write a function that reliably finds the song with the NewPipeExtractor
+        //  using only fields included in the iTunes lookup:
+        //  EXAMPLE: https://itunes.apple.com/search?term=jack+johnson
+
+        // Once I can do that, everything else is just building an interface for the
+        // iTunes API. Playlists, Radio, Jams, etc.
+
         lifecycleScope.launch {
             val streamInfo = withContext(Dispatchers.IO) {
                 StreamInfo.getInfo(youtubeService, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -64,6 +81,8 @@ class MainActivity : AppCompatActivity() {
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
+//            Log.d("TunesPipe", "Heya mate, here's ya URL: $url")
 
             // Log basic info from the successfully fetched stream
             Log.d("TunesPipe", "Successfully fetched stream: ${streamInfo.name}")
