@@ -1,5 +1,6 @@
 package com.example.tunespipe.ui.search
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.tunespipe.MusicPlayer
+import com.example.tunespipe.MusicPlayerService
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import kotlinx.coroutines.launch
 
@@ -43,11 +45,22 @@ class SearchFragment : Fragment() {
                     // Prevent the SearchView from handling the event by itself
                     binding.searchView.clearFocus()
 
-                    // TODO need to refactor so there's like a constant thread for playing the music.
-                    // Hitting playSongFromSearch just changes the song,
-                    // doesn't start a whole new process.
+                    // 1. Create an Intent to start the MusicPlayerService
+                    val serviceIntent = Intent(
+                        requireContext(),
+                        MusicPlayerService::class.java,
+                    )
+                    requireContext().startService(serviceIntent)
+
+                    // 2. Launch the coroutine to search and play the song
+                    //    This logic remains the same, but now it operates on a player
+                    //    that is managed by a long-running service.
                     lifecycleScope.launch {
-                        MusicPlayer.playSongFromSearch(queryString)
+                        try {
+                            MusicPlayer.playSongFromSearch(queryString)
+                        } catch (e: Exception) {
+                            Log.e("SearchFragment", "Error playing song from search", e)
+                        }
                     }
                 }
                 return true

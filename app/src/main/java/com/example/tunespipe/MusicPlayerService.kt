@@ -22,6 +22,12 @@ class MusicPlayerService : MediaSessionService() {
         return mediaSession
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // We will add the logic to show a notification here later.
+        // For now, just starting the service is enough.
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onDestroy() {
         mediaSession?.release()
         super.onDestroy()

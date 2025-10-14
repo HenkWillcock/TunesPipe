@@ -1,9 +1,10 @@
 package com.example.tunespipe
 
+import android.app.NotificationManager
 import android.os.Bundle
+import android.app.NotificationChannel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -11,7 +12,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
 import org.schabi.newpipe.extractor.NewPipe
 
-import kotlinx.coroutines.launch
+const val NOTIFICATION_CHANNEL_ID = "tunespipe_media_playback"
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,10 +39,21 @@ class MainActivity : AppCompatActivity() {
 
         // Must be called on startup.
         NewPipe.init(DownloaderImpl())
-        MusicPlayer.createPlayer(this)
 
-        lifecycleScope.launch {
-            MusicPlayer.playSongFromSearch("Never gonna give you up")
+        // --- Add the Notification Channel creation logic ---
+        val name = "TunesPipe Media Playback"
+        val descriptionText = "Shows the currently playing media"
+        val importance = NotificationManager.IMPORTANCE_LOW // Use LOW to prevent sound
+        val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
+            description = descriptionText
         }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
+        //        lifecycleScope.launch {
+//            MusicPlayer.playSongFromSearch("Never gonna give you up")
+//        }
     }
 }
