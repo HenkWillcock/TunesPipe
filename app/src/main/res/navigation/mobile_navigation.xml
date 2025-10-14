@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_browse">
+    app:startDestination="@+id/navigation_search">
 
     <fragment
-        android:id="@+id/navigation_browse"
-        android:name="com.example.tunespipe.ui.browse.BrowseFragment"
-        android:label="@string/title_browse"
-        tools:layout="@layout/fragment_browse" />
+        android:id="@+id/navigation_search"
+        android:name="com.example.tunespipe.ui.search.SearchFragment"
+        android:label="@string/title_search"
+        tools:layout="@layout/fragment_search" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.tunespipe.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_your_library"
+        android:name="com.example.tunespipe.ui.your_library.YourLibraryFragment"
+        android:label="@string/title_your_library"
+        tools:layout="@layout/fragment_your_library" />
 
     <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="com.example.tunespipe.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        android:id="@+id/navigation_donate"
+        android:name="com.example.tunespipe.ui.donate.DonateFragment"
+        android:label="@string/title_donate"
+        tools:layout="@layout/fragment_donate" />
 </navigation>

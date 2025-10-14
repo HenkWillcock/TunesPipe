@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_browse, R.id.navigation_dashboard, R.id.navigation_notifications
+                R.id.navigation_search, R.id.navigation_your_library, R.id.navigation_donate
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
         // Add iTunes search with a UI.
         // https://itunes.apple.com/search?term=jack+johnson
 
-        // Once I can do that, everything else is just building an interface for the
-        // iTunes API. Playlists, Radio, Jams, etc.
+        // Once I can do that, everything else is just building an interface for the iTunes API.
+        // Playlists, Radio, Jams, etc.
         lifecycleScope.launch {
 
             val searchInfo = withContext(Dispatchers.IO) {
