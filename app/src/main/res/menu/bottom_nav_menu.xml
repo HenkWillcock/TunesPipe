@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/navigation_browse"
-        android:icon="@drawable/ic_home_black_24dp"
+        android:icon="@android:drawable/ic_menu_search"
         android:title="@string/title_browse" />
 
     <item

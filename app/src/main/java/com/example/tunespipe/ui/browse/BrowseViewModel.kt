@@ -7,7 +7,10 @@ import androidx.lifecycle.ViewModel
 class BrowseViewModel : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
-        value = "This is browse Fragment"
+        value = (
+            "TODO: Search box, show iTunes API results.\n" +
+            "Clicking one shoves the song title plus 'Lyric Video' to play with NewPipeExtractor."
+        )
     }
     val text: LiveData<String> = _text
 }
