@@ -1,19 +1,17 @@
 package com.example.tunespipe.ui.search
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.example.tunespipe.databinding.FragmentSearchBinding
 
 class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
-
-    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -21,17 +19,32 @@ class SearchFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val searchViewModel =
-            ViewModelProvider(this).get(SearchViewModel::class.java)
-
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        setupSearchView()
+        return binding.root
+    }
 
-        val textView: TextView = binding.textSearch
-        searchViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
-        return root
+    private fun setupSearchView() {
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            // This method is called when the user hits "enter" or the search button.
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (!query.isNullOrBlank()) {
+                    Log.d("SearchFragment", "Search submitted: $query")
+                    // Prevent the SearchView from handling the event by itself
+                    binding.searchView.clearFocus()
+                    // TODO: Here is where you will trigger the actual search
+                    // For example: searchViewModel.searchForSong(query)
+                }
+                return true
+            }
+
+            // This method is called for every character change in the search box.
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // We don't need to do anything here for now.
+                // Useful for showing search suggestions in real-time.
+                return false // Let the SearchView handle its default behavior
+            }
+        })
     }
 
     override fun onDestroyView() {
