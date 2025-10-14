@@ -51,25 +51,12 @@ class MainActivity : AppCompatActivity() {
         val exoPlayer: ExoPlayer = ExoPlayer.Builder(this).build()
         val youtubeService: StreamingService = NewPipe.getService(0)
 
-//        val search = youtubeService.getSearchExtractor(
-//            "Never gonna give you up",
-//            listOf("music"),
-//            "",  // TODO
-//        )
-//        search.fetchPage()
-//
-//        val items = search.initialPage.items
-//        val firstVideo = items.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
-//        val url = firstVideo?.url
-
-
         // TODO, write a function that reliably finds the song with the NewPipeExtractor
         //  using only fields included in the iTunes lookup:
         //  EXAMPLE: https://itunes.apple.com/search?term=jack+johnson
 
         // Once I can do that, everything else is just building an interface for the
         // iTunes API. Playlists, Radio, Jams, etc.
-
         lifecycleScope.launch {
             val streamInfo = withContext(Dispatchers.IO) {
                 StreamInfo.getInfo(youtubeService, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -81,8 +68,6 @@ class MainActivity : AppCompatActivity() {
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             Log.d("TunesPipe", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
-//            Log.d("TunesPipe", "Heya mate, here's ya URL: $url")
 
             // Log basic info from the successfully fetched stream
             Log.d("TunesPipe", "Successfully fetched stream: ${streamInfo.name}")
@@ -109,8 +94,22 @@ class MainActivity : AppCompatActivity() {
 
                 // 4. Start playback
                 exoPlayer.play()
+
             } else {
                 Log.e("TunesPipe", "No audio streams found for this video.")
+            }
+
+            val search = youtubeService.getSearchExtractor(
+                "Never gonna give you up",
+                listOf("music"),
+                "",  // TODO
+            )
+            withContext(Dispatchers.IO) {
+                search.fetchPage()
+                val items = search.initialPage.items
+                val firstVideo = items.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
+                val url = firstVideo?.url
+                Log.d("TunesPipe", "Heya mate, here's ya URL: $url")
             }
         }
     }
