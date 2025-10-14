@@ -23,6 +23,7 @@ import androidx.media3.common.MediaItem
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.search.SearchInfo
 
 class MainActivity : AppCompatActivity() {
 
@@ -104,6 +105,9 @@ class MainActivity : AppCompatActivity() {
                 listOf("music"),
                 "",  // TODO
             )
+//            val searchInfo = withContext(Dispatchers.IO) {
+//                SearchInfo.getInfo(youtubeService, "rick astley never gonna give you up")
+//            }
             withContext(Dispatchers.IO) {
                 search.fetchPage()
                 val items = search.initialPage.items
