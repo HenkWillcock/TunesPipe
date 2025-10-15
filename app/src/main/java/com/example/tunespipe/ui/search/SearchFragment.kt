@@ -9,8 +9,9 @@ import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.tunespipe.MusicPlayer
+import androidx.media3.common.util.UnstableApi
 import com.example.tunespipe.MusicPlayerService
+import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import kotlinx.coroutines.launch
 
@@ -38,6 +39,7 @@ class SearchFragment : Fragment() {
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             // This method is called when the user hits "enter" or the search button.
+            @UnstableApi
             override fun onQueryTextSubmit(queryString: String?): Boolean {
                 if (!queryString.isNullOrBlank()) {
                     Log.d("SearchFragment", "Search submitted: $queryString")
@@ -45,19 +47,20 @@ class SearchFragment : Fragment() {
                     // Prevent the SearchView from handling the event by itself
                     binding.searchView.clearFocus()
 
-                    // 1. Create an Intent to start the MusicPlayerService
-                    val serviceIntent = Intent(
-                        requireContext(),
-                        MusicPlayerService::class.java,
-                    )
-                    requireContext().startService(serviceIntent)
-
                     // 2. Launch the coroutine to search and play the song
                     //    This logic remains the same, but now it operates on a player
                     //    that is managed by a long-running service.
                     lifecycleScope.launch {
                         try {
-                            MusicPlayer.playSongFromSearch(queryString)
+                            MusicPlayerSingleton.playSongFromSearch(queryString)
+
+                            // Create an Intent to start the MusicPlayerService
+                            val serviceIntent = Intent(
+                                requireContext(),
+                                MusicPlayerService::class.java,
+                            )
+                            requireContext().startService(serviceIntent)
+
                         } catch (e: Exception) {
                             Log.e("SearchFragment", "Error playing song from search", e)
                         }

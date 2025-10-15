@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.exoplayer)
     implementation(libs.mediasession)
+    implementation(libs.mediaui)
+    implementation(libs.media)
     implementation(libs.newpipeextractor)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 }

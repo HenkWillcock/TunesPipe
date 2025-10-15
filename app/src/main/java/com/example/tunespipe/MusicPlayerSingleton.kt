@@ -14,17 +14,9 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
-// A Singleton object to hold our ExoPlayer instance
-object MusicPlayer {
 
-    private var exoPlayer: Player? = null
-
-    fun getOrCreatePlayer(context: Context): Player {
-        if (exoPlayer == null) {
-            exoPlayer = ExoPlayer.Builder(context.applicationContext).build()
-        }
-        return exoPlayer!!
-    }
+object MusicPlayerSingleton {
+    public var exoPlayer: Player? = null
 
     suspend fun playSongFromSearch(searchQuery: String) {
         val youtubeService: StreamingService = NewPipe.getService(0)
@@ -32,8 +24,8 @@ object MusicPlayer {
         val searchInfo = withContext(Dispatchers.IO) {
             val handler = youtubeService.searchQHFactory.fromQuery(
                 searchQuery,
-//                    listOf("music"),
-//                    "",  // TODO
+                // listOf("music"),
+                // "",  // TODO
             )
             SearchInfo.getInfo(youtubeService, handler)
         }
@@ -60,17 +52,10 @@ object MusicPlayer {
             Log.d("TunesPipe", "Format: ${audioStream.format}")
             Log.d("TunesPipe", "URL: $streamUrl")
 
-            // 1. Create a MediaItem from the stream URL
-            val mediaItem = MediaItem.fromUri(streamUrl)
-
-            // 2. Set the MediaItem on the player
-            exoPlayer?.setMediaItem(mediaItem)
-
-            // 3. Prepare the player to start loading the media
-            exoPlayer?.prepare()
-
-            // 4. Start playback
-            exoPlayer?.play()
+            val mediaItem = MediaItem.fromUri(streamUrl)   // Create MediaItem from stream URL
+            exoPlayer?.setMediaItem(mediaItem)                   // Set the MediaItem on the player
+            exoPlayer?.prepare()                                 // Prepare player to start loading media
+            exoPlayer?.play()                                    // Start playback
 
         } else {
             Log.e("TunesPipe", "No audio streams found for this video.")

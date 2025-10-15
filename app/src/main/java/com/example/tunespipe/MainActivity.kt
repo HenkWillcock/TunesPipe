@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.app.NotificationChannel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -52,8 +53,6 @@ class MainActivity : AppCompatActivity() {
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
-        //        lifecycleScope.launch {
-//            MusicPlayer.playSongFromSearch("Never gonna give you up")
-//        }
+        MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
     }
 }

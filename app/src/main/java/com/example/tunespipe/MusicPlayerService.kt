@@ -1,12 +1,29 @@
 package com.example.tunespipe
 
+import android.content.Context
 import android.content.Intent
+import android.util.Log
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.ui.PlayerNotificationManager
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.StreamingService
+import org.schabi.newpipe.extractor.search.SearchInfo
+import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
+@UnstableApi
 class MusicPlayerService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
+    private var notificationManager: PlayerNotificationManager? = null
 
     // This method is called when the service is first created.
     override fun onCreate() {
@@ -14,8 +31,19 @@ class MusicPlayerService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(
             this,
-            MusicPlayer.getOrCreatePlayer(this),
+            MusicPlayerSingleton.exoPlayer!!,
         ).build()
+
+        // Create the notification manager
+        notificationManager = PlayerNotificationManager.Builder(
+            this,
+            1001, // A unique ID for the notification
+            "tunespipe_media_playback"
+        ).build()
+
+        // Link the notification manager to the player and the media session
+        notificationManager?.setPlayer(MusicPlayerSingleton.exoPlayer!!)
+        notificationManager?.setMediaSessionToken(mediaSession!!.platformToken)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
@@ -23,13 +51,12 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // We will add the logic to show a notification here later.
-        // For now, just starting the service is enough.
         return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
         mediaSession?.release()
+        MusicPlayerSingleton.exoPlayer?.release()
         super.onDestroy()
     }
 }
