@@ -1,9 +1,11 @@
 package com.example.tunespipe
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +20,8 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 object MusicPlayerSingleton {
     public var exoPlayer: Player? = null
 
-    suspend fun playSongFromSearch(searchQuery: String) {
+    @UnstableApi
+    suspend fun playSongFromSearch(context: Context, searchQuery: String) {
         val youtubeService: StreamingService = NewPipe.getService(0)
 
         val searchInfo = withContext(Dispatchers.IO) {
@@ -56,6 +59,14 @@ object MusicPlayerSingleton {
             exoPlayer?.setMediaItem(mediaItem)                   // Set the MediaItem on the player
             exoPlayer?.prepare()                                 // Prepare player to start loading media
             exoPlayer?.play()                                    // Start playback
+
+            // This must go after the song has already started playing.
+            context.startService(
+                Intent(
+                    context,
+                    MusicPlayerService::class.java,
+                )
+            )
 
         } else {
             Log.e("TunesPipe", "No audio streams found for this video.")

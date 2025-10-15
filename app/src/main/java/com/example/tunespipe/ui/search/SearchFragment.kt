@@ -38,41 +38,26 @@ class SearchFragment : Fragment() {
 
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            // This method is called when the user hits "enter" or the search button.
+
             @UnstableApi
             override fun onQueryTextSubmit(queryString: String?): Boolean {
                 if (!queryString.isNullOrBlank()) {
-                    Log.d("SearchFragment", "Search submitted: $queryString")
-
-                    // Prevent the SearchView from handling the event by itself
-                    binding.searchView.clearFocus()
-
-                    // 2. Launch the coroutine to search and play the song
-                    //    This logic remains the same, but now it operates on a player
-                    //    that is managed by a long-running service.
+                    // TODO make this the iTunes search.
+                    //  Only plays the song when you click an option.
                     lifecycleScope.launch {
-                        try {
-                            MusicPlayerSingleton.playSongFromSearch(queryString)
+                        binding.searchView.clearFocus()  // Stops SearchView handling event itself
 
-                            // Create an Intent to start the MusicPlayerService
-                            val serviceIntent = Intent(
-                                requireContext(),
-                                MusicPlayerService::class.java,
-                            )
-                            requireContext().startService(serviceIntent)
-
-                        } catch (e: Exception) {
-                            Log.e("SearchFragment", "Error playing song from search", e)
-                        }
+                        MusicPlayerSingleton.playSongFromSearch(
+                            requireContext(),
+                            queryString,
+                        )
                     }
                 }
                 return true
             }
 
-            // This method is called for every character change in the search box.
             override fun onQueryTextChange(newText: String?): Boolean {
-                // We don't need to do anything here for now.
-                // Useful for showing search suggestions in real-time.
+                // TODO search real time.
                 return false // Let the SearchView handle its default behavior
             }
         })
