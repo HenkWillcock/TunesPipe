@@ -2,6 +2,8 @@ package com.example.tunespipe
 
 import android.app.Notification
 import android.content.Intent
+import android.util.Log
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -13,11 +15,24 @@ class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private lateinit var notificationManager: PlayerNotificationManager
 
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) {
+                mediaSession?.player?.seekTo(0)
+                mediaSession?.player?.play()
+
+                // TODO play next song in playlist or queue if there is one.
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
         val player = MusicPlayerSingleton.exoPlayer
             ?: throw IllegalStateException("ExoPlayer has not been initialized!")
+
+        player.addListener(playerListener)
 
         mediaSession = MediaSession.Builder(this, player).build()
 
@@ -33,13 +48,9 @@ class MusicPlayerService : MediaSessionService() {
                     notification: Notification,
                     ongoing: Boolean
                 ) {
-                    // When the notification is posted, promote the service to the foreground.
-                    // The 'ongoing' flag is true when the media is playing.
                     if (ongoing) {
                         startForeground(notificationId, notification)
                     } else {
-                        // If the 'ongoing' flag is false (e.g., player is paused), demote the service.
-                        // This makes the notification dismissible.
                         stopForeground(STOP_FOREGROUND_DETACH)
                     }
                 }
@@ -55,7 +66,6 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        // Stop the service if the task is removed and the player is not playing.
         val player = mediaSession?.player ?: return
         if (!player.playWhenReady || player.mediaItemCount == 0) {
             stopSelf()
@@ -67,6 +77,7 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        mediaSession?.player?.removeListener(playerListener)
         mediaSession?.release()
         notificationManager.setPlayer(null)
         super.onDestroy()

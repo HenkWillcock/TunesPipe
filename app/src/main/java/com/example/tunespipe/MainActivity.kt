@@ -1,9 +1,8 @@
 package com.example.tunespipe
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Bundle
-import android.app.NotificationChannel
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.findNavController
@@ -11,6 +10,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.schabi.newpipe.extractor.NewPipe
 
 const val NOTIFICATION_CHANNEL_ID = "tunespipe_media_playback"
@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
         val notificationManager: NotificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
-
         MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
     }
 }
