@@ -26,7 +26,6 @@ class MusicPlayerService : MediaSessionService() {
             1001, // Notification ID
             NOTIFICATION_CHANNEL_ID
         )
-            // --- THIS IS THE KEY ---
             // Use a NotificationListener to get access to the notification and manage the foreground state.
             .setNotificationListener(object : PlayerNotificationManager.NotificationListener {
                 override fun onNotificationPosted(
@@ -46,11 +45,9 @@ class MusicPlayerService : MediaSessionService() {
                 }
 
                 override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
-                    // When the notification is cancelled (e.g., swiped away), stop the service.
                     stopSelf()
                 }
             })
-            // --- END OF KEY CHANGE ---
             .build().apply {
                 setPlayer(player)
                 setMediaSessionToken(mediaSession!!.platformToken)
