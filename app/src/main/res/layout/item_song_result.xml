@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <!-- This ImageView will hold the album artwork -->
+    <!-- Album Art -->
     <ImageView
         android:id="@+id/artworkImage"
         android:layout_width="60dp"
@@ -16,7 +16,19 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
 
-    <!-- This TextView will show the song's track name -->
+    <ProgressBar
+        android:id="@+id/loadingSpinner"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/artworkImage"
+        app:layout_constraintEnd_toEndOf="@id/artworkImage"
+        app:layout_constraintStart_toStartOf="@id/artworkImage"
+        app:layout_constraintTop_toTopOf="@id/artworkImage"
+        tools:visibility="visible" />
+
+    <!-- Track Name -->
     <TextView
         android:id="@+id/trackName"
         android:layout_width="0dp"
@@ -31,7 +43,7 @@
         app:layout_constraintTop_toTopOf="@id/artworkImage"
         tools:text="The Longest Song Title in the World Ever" />
 
-    <!-- This TextView will show the artist's name -->
+    <!-- Artist Name -->
     <TextView
         android:id="@+id/artistName"
         android:layout_width="0dp"

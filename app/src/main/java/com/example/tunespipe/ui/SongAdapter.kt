@@ -27,19 +27,16 @@ class SongAdapter(
         return SongViewHolder(binding)
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         val song = songs[position]
         holder.binding.trackName.text = song.trackName
         holder.binding.artistName.text = song.artistName
 
-        // Use Glide to load the album artwork
         Glide.with(holder.itemView.context)
             .load(song.artworkUrl)
             .placeholder(R.drawable.ic_launcher_foreground) // A default image
             .into(holder.binding.artworkImage)
 
-        // Set the click listener for the entire row
         holder.itemView.setOnClickListener {
             onSongClicked(song)
         }

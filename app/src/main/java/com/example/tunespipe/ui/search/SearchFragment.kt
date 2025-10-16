@@ -1,6 +1,5 @@
 package com.example.tunespipe.ui.search
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tunespipe.MusicPlayerService
 import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
@@ -43,19 +41,7 @@ class SearchFragment : Fragment() {
                 if (!queryString.isNullOrBlank()) {
                     lifecycleScope.launch {
                         binding.searchView.clearFocus()  // Stops SearchView handling event itself
-
-                        Log.d("TunesPipe", "Searching...")
-
-                        val songs = searchITunes(queryString)
-
-                        Log.d("TunesPipe", "Found songs: ${songs}")
-
-                        displaySearchResults(songs)
-
-//                        MusicPlayerSingleton.playSongFromSearch(
-//                            requireContext(),
-//                            queryString,
-//                        )
+                        displaySearchResults(searchITunes(queryString))
                     }
                 }
                 return true
@@ -76,8 +62,7 @@ class SearchFragment : Fragment() {
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
         binding.searchResultsRecycler.apply {
-            // A LinearLayoutManager arranges the items in a one-dimensional list.
-            layoutManager = LinearLayoutManager(context)
+            layoutManager = LinearLayoutManager(context)  // Arranges items in a 1D list.
             adapter = SongAdapter(songs) { clickedSong: Song ->
                 Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
