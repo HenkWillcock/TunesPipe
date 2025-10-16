@@ -54,7 +54,6 @@ object MusicPlayerSingleton {
         val searchInfo = SearchInfo.getInfo(youtubeService, youtubeService.searchQHFactory.fromQuery(searchQuery))
 
         val itunesDurationSeconds = itunesDurationMillis / 1000
-        val DURATION_TOLERANCE_SECONDS = 5 // Allow 5 seconds of difference
 
         Log.d("TunesPipe", "Target duration: ~$itunesDurationSeconds seconds.")
 
@@ -66,8 +65,8 @@ object MusicPlayerSingleton {
                 val youtubeDurationSeconds = item.duration
                 Log.d("TunesPipe", "Checking '${item.name}' (Duration: $youtubeDurationSeconds s)")
 
-                // Check if the duration is within our tolerance
-                if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= DURATION_TOLERANCE_SECONDS) {
+                // Check if the duration is within our tolerance, allowing 5 seconds difference.
+                if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= 5) {
                     Log.d("TunesPipe", "SUCCESS: Duration matches. Fetching stream info for '${item.name}'.")
                     // It's a match, get the full stream info to find the audio URL
                     val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
