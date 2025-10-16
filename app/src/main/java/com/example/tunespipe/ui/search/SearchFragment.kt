@@ -41,9 +41,6 @@ class SearchFragment : Fragment() {
             @UnstableApi
             override fun onQueryTextSubmit(queryString: String?): Boolean {
                 if (!queryString.isNullOrBlank()) {
-                    // TODO make this the iTunes search with a UI.
-                    // https://itunes.apple.com/search?term=jack+johnson
-                    //  Only plays the song when you click an option.
                     lifecycleScope.launch {
                         binding.searchView.clearFocus()  // Stops SearchView handling event itself
 
@@ -76,6 +73,7 @@ class SearchFragment : Fragment() {
         _binding = null
     }
 
+    @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
         binding.searchResultsRecycler.apply {
             // A LinearLayoutManager arranges the items in a one-dimensional list.
@@ -83,7 +81,13 @@ class SearchFragment : Fragment() {
             adapter = SongAdapter(songs) { clickedSong: Song ->
                 Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
-                // TODO: Tell the MusicPlayerSingleton to play the clickedSong.previewUrl
+                lifecycleScope.launch {
+                    Log.d("SearchFragment", "11111111")
+                    MusicPlayerSingleton.playSongFromSearch(
+                        requireContext(),
+                        "${clickedSong.artistName} - ${clickedSong.trackName}",
+                    )
+                }
             }
         }
     }
