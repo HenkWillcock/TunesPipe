@@ -1,6 +1,7 @@
 package com.example.tunespipe
 
 import android.content.Intent
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -12,38 +13,41 @@ class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private var notificationManager: PlayerNotificationManager? = null
 
-    // This method is called when the service is first created.
     override fun onCreate() {
         super.onCreate()
 
-        mediaSession = MediaSession.Builder(
-            this,
-            MusicPlayerSingleton.exoPlayer!!,
-        ).build()
+        val player = MusicPlayerSingleton.exoPlayer
+            ?: throw IllegalStateException("ExoPlayer has not been initialized!")
 
-        // Create the notification manager
+        mediaSession = MediaSession.Builder(this, player).build()
+
+        // The PlayerNotificationManager is smart enough to handle the foreground service
+        // and notification display on its own when a MediaSession is provided.
         notificationManager = PlayerNotificationManager.Builder(
             this,
-            1001, // A unique ID for the notification
-            "tunespipe_media_playback"
-        ).build()
+            1001,
+            NOTIFICATION_CHANNEL_ID
+        ).build().apply {
+            setPlayer(player)
+            setMediaSessionToken(mediaSession!!.platformToken)
+        }
+    }
 
-        // Link the notification manager to the player and the media session
-        notificationManager?.setPlayer(MusicPlayerSingleton.exoPlayer!!)
-        notificationManager?.setMediaSessionToken(mediaSession!!.platformToken)
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val player = mediaSession?.player ?: return
+        if (!player.playWhenReady || player.mediaItemCount == 0) {
+            // If the player is paused or has nothing to play, stop the service.
+            stopSelf()
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return super.onStartCommand(intent, flags, startId)
-    }
-
     override fun onDestroy() {
         mediaSession?.release()
-        MusicPlayerSingleton.exoPlayer?.release()
+        notificationManager?.setPlayer(null)
         super.onDestroy()
     }
 }
