@@ -21,20 +21,17 @@ object MusicPlayerSingleton {
     public var exoPlayer: Player? = null
 
     @UnstableApi
-    suspend fun playSongFromSearch(context: Context, searchQuery: String) {
-        Log.d("SearchFragment", "2222222")
+    suspend fun playSong(context: Context, song: Song) {
         val youtubeService: StreamingService = NewPipe.getService(0)
-        Log.d("SearchFragment", "33333333")
 
         val searchInfo = withContext(Dispatchers.IO) {
             val handler = youtubeService.searchQHFactory.fromQuery(
-                searchQuery,
+                "${song.artistName} - ${song.trackName}",
                 // listOf("music"),
                 // "",  // TODO
             )
             SearchInfo.getInfo(youtubeService, handler)
         }
-        Log.d("SearchFragment", "44444444")
 
         val firstVideo = searchInfo.relatedItems.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
         Log.d("TunesPipe", "First vid: $firstVideo")

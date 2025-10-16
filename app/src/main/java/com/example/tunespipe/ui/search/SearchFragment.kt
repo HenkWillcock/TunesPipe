@@ -68,10 +68,7 @@ class SearchFragment : Fragment() {
             songAdapter?.setPlaying(clickedSong)
 
             lifecycleScope.launch {
-                MusicPlayerSingleton.playSongFromSearch(
-                    requireContext(),
-                    "${clickedSong.artistName} - ${clickedSong.trackName}",
-                )
+                MusicPlayerSingleton.playSong(requireContext(), clickedSong)
             }
         }
         binding.searchResultsRecycler.apply {

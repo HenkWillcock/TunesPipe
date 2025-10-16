@@ -15,15 +15,11 @@ data class Song(
     val trackName: String,
     val artistName: String,
     val artworkUrl: String,
-    val previewUrl: String
+    val previewUrl: String,
+    val durationMillis: Long,
 )
 
-/**
- * Searches the iTunes API for a given search term.
- *
- * @param searchTerm The term to search for (e.g., "Daft Punk").
- * @return A list of 'Song' objects matching the search, or an empty list if an error occurs.
- */
+
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
 
@@ -67,7 +63,8 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
                         artistName = songObject.optString("artistName", "Unknown Artist"),
                         artworkUrl = songObject.optString("artworkUrl100", "")
                             .replace("100x100bb.jpg", "600x600bb.jpg"),
-                        previewUrl = songObject.optString("previewUrl", "")
+                        previewUrl = songObject.optString("previewUrl", ""),
+                        durationMillis = songObject.optLong("trackTimeMillis", 0),
                     )
                 )
             }
