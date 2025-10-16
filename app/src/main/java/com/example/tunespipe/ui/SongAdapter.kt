@@ -1,6 +1,7 @@
 package com.example.tunespipe.ui
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -13,16 +14,15 @@ class SongAdapter(
     private val onSongClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
-    // Describes an item view and metadata about its place within the RecyclerView.
-    class SongViewHolder(val binding: ItemSongResultBinding) :
-        RecyclerView.ViewHolder(binding.root)
+    private var loadingSong: Song? = null
 
-    // Create new views (invoked by the layout manager)
+    class SongViewHolder(val binding: ItemSongResultBinding) : RecyclerView.ViewHolder(binding.root)
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
         val binding = ItemSongResultBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
-            false
+            false,
         )
         return SongViewHolder(binding)
     }
@@ -34,14 +34,26 @@ class SongAdapter(
 
         Glide.with(holder.itemView.context)
             .load(song.artworkUrl)
-            .placeholder(R.drawable.ic_launcher_foreground) // A default image
+            .placeholder(R.drawable.ic_launcher_foreground)
             .into(holder.binding.artworkImage)
+
+        // Show the spinner ONLY if this song is the one that's loading.
+        // TODO ternary
+        holder.binding.loadingSpinner.visibility = if (loadingSong == song) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         holder.itemView.setOnClickListener {
             onSongClicked(song)
         }
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount() = songs.size
+
+    fun setLoading(song: Song) {
+        loadingSong = song
+        notifyDataSetChanged() // Redraw the entire list to show/hide spinners.
+    }
 }
