@@ -15,6 +15,7 @@ import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import kotlin.math.abs
 
 
 object MusicPlayerSingleton {
@@ -22,55 +23,61 @@ object MusicPlayerSingleton {
 
     @UnstableApi
     suspend fun playSong(context: Context, song: Song) {
-        val youtubeService: StreamingService = NewPipe.getService(0)
+        val searchQuery = "${song.artistName} - ${song.trackName}"
+        Log.d("TunesPipe", "Starting YouTube search for: $searchQuery")
 
-        val searchInfo = withContext(Dispatchers.IO) {
-            val handler = youtubeService.searchQHFactory.fromQuery(
-                "${song.artistName} - ${song.trackName}",
-                // listOf("music"),
-                // "",  // TODO
-            )
-            SearchInfo.getInfo(youtubeService, handler)
+        try {
+            // Find the best matching stream URL by checking duration
+            val streamUrl = withContext(Dispatchers.IO) {
+                findBestAudioStreamUrl(searchQuery, song.durationMillis)
+            }
+
+            if (streamUrl != null) {
+                Log.d("TunesPipe", "Match found! Playing stream: $streamUrl")
+                val mediaItem = MediaItem.fromUri(streamUrl)
+                exoPlayer?.setMediaItem(mediaItem)
+                exoPlayer?.prepare()
+                exoPlayer?.play()
+
+                context.startService(Intent(context, MusicPlayerService::class.java))
+            } else {
+                Log.w("TunesPipe", "No suitable audio stream found after checking YouTube results.")
+                // Here you could add a Toast or some other UI feedback for the user
+            }
+        } catch (e: Exception) {
+            Log.e("TunesPipe", "An error occurred during playSongFromSearch", e)
+        }
+    }
+
+    private suspend fun findBestAudioStreamUrl(searchQuery: String, itunesDurationMillis: Long): String? {
+        val youtubeService = NewPipe.getService(0)
+        val searchInfo = SearchInfo.getInfo(youtubeService, youtubeService.searchQHFactory.fromQuery(searchQuery))
+
+        val itunesDurationSeconds = itunesDurationMillis / 1000
+        val DURATION_TOLERANCE_SECONDS = 5 // Allow 5 seconds of difference
+
+        Log.d("TunesPipe", "Target duration: ~$itunesDurationSeconds seconds.")
+
+        // Take the first 100 items from the search results
+        val itemsToCheck = searchInfo.relatedItems.take(100)
+
+        for (item in itemsToCheck) {
+            if (item is StreamInfoItem) {
+                val youtubeDurationSeconds = item.duration
+                Log.d("TunesPipe", "Checking '${item.name}' (Duration: $youtubeDurationSeconds s)")
+
+                // Check if the duration is within our tolerance
+                if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= DURATION_TOLERANCE_SECONDS) {
+                    Log.d("TunesPipe", "SUCCESS: Duration matches. Fetching stream info for '${item.name}'.")
+                    // It's a match, get the full stream info to find the audio URL
+                    val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
+                    // Return the URL of the highest quality audio stream
+                    return streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
+                }
+            }
         }
 
-        val firstVideo = searchInfo.relatedItems.firstOrNull { it is StreamInfoItem } as? StreamInfoItem
-        Log.d("TunesPipe", "First vid: $firstVideo")
-        val url = firstVideo?.url
-        Log.d("TunesPipe", "Heya mate, here's ya URL: $url")
-
-        val streamInfo = withContext(Dispatchers.IO) {
-            StreamInfo.getInfo(youtubeService, url)
-        }
-
-        // Log basic info from the successfully fetched stream
-        Log.d("TunesPipe", "Successfully fetched stream: ${streamInfo.name}")
-        Log.d("TunesPipe", "Uploader: ${streamInfo.uploaderName}")
-
-        // Get the audio stream with the highest bitrate for the best quality
-        val audioStream: AudioStream? = streamInfo.audioStreams.maxByOrNull { it.averageBitrate }
-
-        if (audioStream != null) {
-            val streamUrl = audioStream.content
-            Log.d("TunesPipe", "Found audio stream!")
-            Log.d("TunesPipe", "Bitrate: ${audioStream.averageBitrate} kbps")
-            Log.d("TunesPipe", "Format: ${audioStream.format}")
-            Log.d("TunesPipe", "URL: $streamUrl")
-
-            val mediaItem = MediaItem.fromUri(streamUrl)   // Create MediaItem from stream URL
-            exoPlayer?.setMediaItem(mediaItem)                   // Set the MediaItem on the player
-            exoPlayer?.prepare()                                 // Prepare player to start loading media
-            exoPlayer?.play()                                    // Start playback
-
-            // This must go after the song has already started playing.
-            context.startService(
-                Intent(
-                    context,
-                    MusicPlayerService::class.java,
-                )
-            )
-
-        } else {
-            Log.e("TunesPipe", "No audio streams found for this video.")
-        }
+        // If the loop finishes without finding a match
+        return null
     }
 }
