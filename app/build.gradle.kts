@@ -59,5 +59,6 @@ dependencies {
     implementation(libs.mediaui)
     implementation(libs.media)
     implementation(libs.newpipeextractor)
+    implementation(libs.glide)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 }

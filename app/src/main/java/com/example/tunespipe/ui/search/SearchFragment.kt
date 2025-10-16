@@ -10,12 +10,15 @@ import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerService
 import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
+import com.example.tunespipe.ui.SongAdapter
 import kotlinx.coroutines.launch
+
 
 class SearchFragment : Fragment() {
 
@@ -44,9 +47,13 @@ class SearchFragment : Fragment() {
                     lifecycleScope.launch {
                         binding.searchView.clearFocus()  // Stops SearchView handling event itself
 
+                        Log.d("TunesPipe", "Searching...")
+
                         val songs = searchITunes(queryString)
 
                         Log.d("TunesPipe", "Found songs: ${songs}")
+
+                        displaySearchResults(songs)
 
 //                        MusicPlayerSingleton.playSongFromSearch(
 //                            requireContext(),
@@ -67,5 +74,17 @@ class SearchFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun displaySearchResults(songs: List<Song>) {
+        binding.searchResultsRecycler.apply {
+            // A LinearLayoutManager arranges the items in a one-dimensional list.
+            layoutManager = LinearLayoutManager(context)
+            adapter = SongAdapter(songs) { clickedSong: Song ->
+                Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
+
+                // TODO: Tell the MusicPlayerSingleton to play the clickedSong.previewUrl
+            }
+        }
     }
 }

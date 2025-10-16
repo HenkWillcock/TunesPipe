@@ -18,6 +18,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- TODO add a RecyclerView here later to show search results -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/searchResultsRecycler"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchView"
+        tools:listitem="@layout/item_song_result" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

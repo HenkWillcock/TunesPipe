@@ -1,4 +1,5 @@
 package com.example.tunespipe
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -26,7 +27,7 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
         val client = OkHttpClient()
 
-        // Build the URL, e.g., https://itunes.apple.com/search?term=...&entity=song
+
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
             .addQueryParameter("term", searchTerm)
             .addQueryParameter("entity", "song")
@@ -35,9 +36,12 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
         val request = Request.Builder().url(url).build()
 
         try {
+            Log.d("TunesPipe", "Sending request to url '$url'...")
             val response = client.newCall(request).execute()
+            Log.d("TunesPipe", "Response received.")
+
             if (!response.isSuccessful) {
-                return@withContext emptyList() // Return empty on network error
+                return@withContext emptyList()
             }
 
             val responseBody = response.body?.string() ?: return@withContext emptyList()
