@@ -22,6 +22,7 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
+    private var songAdapter: SongAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,19 +62,21 @@ class SearchFragment : Fragment() {
 
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
-        binding.searchResultsRecycler.apply {
-            layoutManager = LinearLayoutManager(context)  // Arranges items in a 1D list.
-            adapter = SongAdapter(songs) { clickedSong: Song ->
-                Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
+        songAdapter = SongAdapter(songs) { clickedSong ->
+            Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
-                lifecycleScope.launch {
-                    Log.d("SearchFragment", "11111111")
-                    MusicPlayerSingleton.playSongFromSearch(
-                        requireContext(),
-                        "${clickedSong.artistName} - ${clickedSong.trackName}",
-                    )
-                }
+            songAdapter?.setPlaying(clickedSong)
+
+            lifecycleScope.launch {
+                MusicPlayerSingleton.playSongFromSearch(
+                    requireContext(),
+                    "${clickedSong.artistName} - ${clickedSong.trackName}",
+                )
             }
+        }
+        binding.searchResultsRecycler.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = songAdapter
         }
     }
 }

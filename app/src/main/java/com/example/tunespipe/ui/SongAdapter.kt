@@ -52,7 +52,7 @@ class SongAdapter(
 
     override fun getItemCount() = songs.size
 
-    fun setLoading(song: Song) {
+    fun setPlaying(song: Song) {
         loadingSong = song
         notifyDataSetChanged() // Redraw the entire list to show/hide spinners.
     }
