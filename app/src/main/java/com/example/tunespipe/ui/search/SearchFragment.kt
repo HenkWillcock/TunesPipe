@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
@@ -22,7 +21,7 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    private var songAdapter: SongAdapter? = null
+    var songAdapter: SongAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,11 +64,8 @@ class SearchFragment : Fragment() {
         songAdapter = SongAdapter(songs) { clickedSong ->
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
-            songAdapter?.setPlaying(clickedSong)
-
-            lifecycleScope.launch {
-                MusicPlayerSingleton.playSong(requireContext(), clickedSong)
-            }
+            val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
+            songActionsDialog.show(childFragmentManager, "SongActionsDialog")
         }
         binding.searchResultsRecycler.apply {
             layoutManager = LinearLayoutManager(context)

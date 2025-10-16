@@ -1,23 +1,26 @@
 package com.example.tunespipe
 import android.util.Log
-import okhttp3.Dns // <-- Add this import
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.Inet4Address // <-- Add this import
-import java.net.InetAddress // <-- Add this import
+import java.net.Inet4Address
+import java.net.InetAddress
 
 
+@Parcelize
 data class Song(
     val trackName: String,
     val artistName: String,
     val artworkUrl: String,
     val previewUrl: String,
     val durationMillis: Long,
-)
+) : Parcelable
 
 
 suspend fun searchITunes(searchTerm: String): List<Song> {
