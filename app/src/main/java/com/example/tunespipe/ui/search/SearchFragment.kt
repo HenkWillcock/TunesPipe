@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
-import com.example.tunespipe.ui.SongAdapter
+import com.example.tunespipe.ui.SongRecyclerView
 import kotlinx.coroutines.launch
 
 
@@ -21,7 +21,7 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    var songAdapter: SongAdapter? = null
+    var songAdapter: SongRecyclerView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,7 +61,7 @@ class SearchFragment : Fragment() {
 
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
-        songAdapter = SongAdapter(songs) { clickedSong ->
+        songAdapter = SongRecyclerView(songs) { clickedSong ->
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)

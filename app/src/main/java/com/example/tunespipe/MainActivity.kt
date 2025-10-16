@@ -38,20 +38,22 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        // Must be called on startup.
-        NewPipe.init(DownloaderImpl())
 
-        // --- Add the Notification Channel creation logic ---
-        val name = "TunesPipe Media Playback"
-        val descriptionText = "Shows the currently playing media"
-        val importance = NotificationManager.IMPORTANCE_LOW // Use LOW to prevent sound
-        val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
-            description = descriptionText
+        NewPipe.init(DownloaderImpl())  // Must be called on startup.
+        setupNotificationManager()
+        MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
+    }
+
+    fun setupNotificationManager() {
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "TunesPipe Media Playback",
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = "Shows the currently playing media"
         }
-        // Register the channel with the system
         val notificationManager: NotificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
-        MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
     }
 }

@@ -9,10 +9,10 @@ import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
 
-class SongAdapter(
+class SongRecyclerView(
     private val songs: List<Song>,
     private val onSongClicked: (Song) -> Unit
-) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
+) : RecyclerView.Adapter<SongRecyclerView.SongViewHolder>() {
 
     private var loadingSong: Song? = null
 
@@ -38,12 +38,9 @@ class SongAdapter(
             .into(holder.binding.artworkImage)
 
         // Show the spinner ONLY if this song is the one that's loading.
-        // TODO ternary
-        holder.binding.loadingSpinner.visibility = if (loadingSong == song) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+        holder.binding.loadingSpinner.visibility =
+            if (loadingSong == song) View.VISIBLE
+            else View.GONE
 
         holder.itemView.setOnClickListener {
             onSongClicked(song)
