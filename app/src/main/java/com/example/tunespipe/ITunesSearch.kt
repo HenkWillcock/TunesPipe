@@ -27,15 +27,16 @@ data class Song(
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
 
-        val ipv4Dns = object : Dns {
-            override fun lookup(hostname: String): List<InetAddress> {
-                return Dns.SYSTEM.lookup(hostname).filter { Inet4Address::class.java.isInstance(it) }
-            }
-        }
-
-        val client = OkHttpClient.Builder()
-            .dns(ipv4Dns) // Tell the client to use our IPv4-only DNS resolver
-            .build()
+        val client = OkHttpClient
+            .Builder()
+            .dns(
+                // It's crucial we use IPv4
+                object : Dns {
+                    override fun lookup(hostname: String): List<InetAddress> {
+                        return Dns.SYSTEM.lookup(hostname).filter { Inet4Address::class.java.isInstance(it) }
+                    }
+                }
+            ).build()
 
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
             .addQueryParameter("term", searchTerm)
@@ -53,7 +54,6 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
                 return@withContext emptyList()
             }
 
-            // ... (The rest of the function is exactly the same)
             val responseBody = response.body?.string() ?: return@withContext emptyList()
             val jsonObject = JSONObject(responseBody)
             val resultsArray = jsonObject.optJSONArray("results") ?: return@withContext emptyList()

@@ -7,10 +7,15 @@ import org.schabi.newpipe.extractor.downloader.Request;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import okhttp3.Dns;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -32,9 +37,25 @@ public final class DownloaderImpl extends Downloader {
     private final OkHttpClient client;
 
     public DownloaderImpl() {
+        Dns ipv4Dns = hostname -> {
+            List<InetAddress> allAddresses = Dns.SYSTEM.lookup(hostname);
+            List<InetAddress> ipv4Addresses = new ArrayList<>();
+            for (InetAddress address : allAddresses) {
+                if (address instanceof Inet4Address) {
+                    ipv4Addresses.add(address);
+                }
+            }
+            if (ipv4Addresses.isEmpty()) {
+                throw new UnknownHostException("No IPv4 address found for " + hostname);
+            }
+            return ipv4Addresses;
+        };
+
         this.client = new OkHttpClient.Builder()
+                .dns(ipv4Dns)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .build();
+
         this.mCookies = new HashMap<>();
     }
 
