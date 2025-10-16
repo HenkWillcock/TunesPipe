@@ -12,7 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.example.tunespipe.MusicPlayerService
 import com.example.tunespipe.MusicPlayerSingleton
+import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
+import com.example.tunespipe.searchITunes
 import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
@@ -30,27 +32,26 @@ class SearchFragment : Fragment() {
         return binding.root
     }
 
-    // TODO
-    // Add iTunes search with a UI.
-    // https://itunes.apple.com/search?term=jack+johnson
-    // Once I can do that, everything else is just building an interface for the iTunes API.
-    // Playlists, Radio, Jams, etc.
-
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             @UnstableApi
             override fun onQueryTextSubmit(queryString: String?): Boolean {
                 if (!queryString.isNullOrBlank()) {
-                    // TODO make this the iTunes search.
+                    // TODO make this the iTunes search with a UI.
+                    // https://itunes.apple.com/search?term=jack+johnson
                     //  Only plays the song when you click an option.
                     lifecycleScope.launch {
                         binding.searchView.clearFocus()  // Stops SearchView handling event itself
 
-                        MusicPlayerSingleton.playSongFromSearch(
-                            requireContext(),
-                            queryString,
-                        )
+                        val songs = searchITunes(queryString)
+
+                        Log.d("TunesPipe", "Found songs: ${songs}")
+
+//                        MusicPlayerSingleton.playSongFromSearch(
+//                            requireContext(),
+//                            queryString,
+//                        )
                     }
                 }
                 return true
