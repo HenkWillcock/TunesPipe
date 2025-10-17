@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
     id("kotlin-parcelize")
 }
 
@@ -62,4 +63,7 @@ dependencies {
     implementation(libs.newpipeextractor)
     implementation(libs.glide)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx) // For coroutine support
+    ksp(libs.androidx.room.compiler) // Annotation processor
 }
