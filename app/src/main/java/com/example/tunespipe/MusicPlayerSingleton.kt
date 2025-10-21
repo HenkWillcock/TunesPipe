@@ -7,10 +7,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
-// --- START OF NEW CODE: Add imports for StateFlow ---
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-// --- END OF NEW CODE ---
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.search.SearchInfo
@@ -22,18 +20,21 @@ import kotlin.math.abs
 object MusicPlayerSingleton {
     var exoPlayer: ExoPlayer? = null
 
-    // --- START OF NEW CODE: Global state for the playing/loading song ---
     private val _nowPlaying = MutableStateFlow<Song?>(null)
-    val nowPlaying = _nowPlaying.asStateFlow() // This is the public, read-only flow for UI to observe
-    // --- END OF NEW CODE ---
+    val nowPlaying = _nowPlaying.asStateFlow()
 
     @UnstableApi
     suspend fun playSong(context: Context, song: Song) {
-        // --- START OF CHANGE: Update global state when play begins ---
-        _nowPlaying.value = song // Set the current song to show the spinner everywhere
-        // --- END OF CHANGE ---
+        // --- START OF THE FIX ---
+        // Immediately stop any currently playing audio and clear the player's state.
+        // This prevents the overlapping audio race condition.
+        exoPlayer?.stop()
+        exoPlayer?.clearMediaItems()
+        // --- END OF THE FIX ---
+
+        _nowPlaying.value = song // Show the spinner for the new song
+
         try {
-            // Find the best matching stream URL by checking duration
             val streamUrl = withContext(Dispatchers.IO) {
                 findBestAudioStreamUrl(song)
             }
@@ -46,22 +47,20 @@ object MusicPlayerSingleton {
                     exoPlayer?.prepare()
                     exoPlayer?.play()
 
-                    // Start the service to enable background playback and notifications
                     context.startService(Intent(context, MusicPlayerService::class.java))
                 }
             } else {
-                // TODO a toast
                 Log.w("TunesPipe", "No suitable audio stream found after checking YouTube results.")
-                _nowPlaying.value = null // Clear state if playing fails
+                _nowPlaying.value = null // Clear spinner if playing fails
             }
         } catch (e: Exception) {
-            // TODO a toast
             Log.e("TunesPipe", "An error occurred during playSongFromSearch", e)
-            _nowPlaying.value = null // Clear state on error
+            _nowPlaying.value = null // Clear spinner on error
         }
     }
 
     private fun findBestAudioStreamUrl(song: Song): String? {
+        // ... (rest of the file is unchanged)
         val searchQuery = "${song.artistName} - ${song.trackName}"
         Log.d("TunesPipe", "Starting YouTube search for: $searchQuery")
         val youtubeService = NewPipe.getService(0)
@@ -80,7 +79,6 @@ object MusicPlayerSingleton {
                 val youtubeDurationSeconds = item.duration
                 Log.d("TunesPipe", "Checking '${item.name}' (Duration: $youtubeDurationSeconds s)")
 
-                // Check if the duration is within our tolerance, allowing 3 seconds difference.
                 if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= 3) {
                     val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
                     return streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
