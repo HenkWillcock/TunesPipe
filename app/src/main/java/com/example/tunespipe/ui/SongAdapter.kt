@@ -9,10 +9,12 @@ import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
 
+// --- START OF CHANGE: Change `songs` from val to var ---
 class SongRecyclerView(
-    private val songs: List<Song>,
+    private var songs: List<Song>,
     private val onSongClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongRecyclerView.SongViewHolder>() {
+// --- END OF CHANGE ---
 
     private var loadingSong: Song? = null
 
@@ -53,4 +55,11 @@ class SongRecyclerView(
         loadingSong = song
         notifyDataSetChanged() // Redraw the entire list to show/hide spinners.
     }
+
+    // --- START OF NEW CODE: Add the missing updateSongs function ---
+    fun updateSongs(newSongs: List<Song>) {
+        this.songs = newSongs
+        notifyDataSetChanged() // Tell the adapter that the data has changed
+    }
+    // --- END OF NEW CODE ---
 }

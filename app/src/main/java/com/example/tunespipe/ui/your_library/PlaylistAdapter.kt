@@ -10,7 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tunespipe.R
 import com.example.tunespipe.database.Playlist
 
-class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.PlaylistViewHolder>(PlaylistsComparator()) {
+// --- START OF CHANGE: Add a click listener function to the constructor ---
+class PlaylistAdapter(private val onItemClicked: (Playlist) -> Unit) : ListAdapter<Playlist, PlaylistAdapter.PlaylistViewHolder>(PlaylistsComparator()) {
+// --- END OF CHANGE ---
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -20,6 +22,11 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.PlaylistViewHolder
 
     override fun onBindViewHolder(holder: PlaylistViewHolder, position: Int) {
         val current = getItem(position)
+        // --- START OF CHANGE: Set the click listener on the item's view ---
+        holder.itemView.setOnClickListener {
+            onItemClicked(current)
+        }
+        // --- END OF CHANGE ---
         holder.bind(current.name)
     }
 

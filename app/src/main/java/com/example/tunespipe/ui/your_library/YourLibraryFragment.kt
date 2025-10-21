@@ -8,6 +8,9 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+// --- START OF CHANGE: Import the NavController ---
+import androidx.navigation.fragment.findNavController
+// --- END OF CHANGE ---
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentYourLibraryBinding
@@ -33,8 +36,15 @@ class YourLibraryFragment : Fragment() {
         _binding = FragmentYourLibraryBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // 1. Create the adapter instance
-        val adapter = PlaylistAdapter()
+        // --- START OF CHANGE: Update adapter instantiation to handle clicks ---
+        // 1. Create the adapter, passing in the logic for what happens on click.
+        val adapter = PlaylistAdapter { playlist ->
+            // When an item is clicked, create the navigation action, passing the playlist's ID.
+            val action = YourLibraryFragmentDirections.actionYourLibraryToPlaylistDetail(playlist.id)
+            // Use the NavController to perform the navigation.
+            findNavController().navigate(action)
+        }
+        // --- END OF CHANGE ---
 
         // 2. Set up the RecyclerView
         binding.playlistsRecyclerView.adapter = adapter
