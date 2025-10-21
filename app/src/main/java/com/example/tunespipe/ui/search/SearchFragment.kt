@@ -21,10 +21,6 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    // --- START OF CHANGE ---
-    // Remove the unnecessary class property for the adapter.
-    // var songAdapter: SongRecyclerView? = null
-    // --- END OF CHANGE ---
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,8 +29,27 @@ class SearchFragment : Fragment() {
     ): View {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
         setupSearchView()
+        // --- START OF CHANGE: Setup RecyclerView upfront ---
+        setupRecyclerView()
+        // --- END OF CHANGE ---
         return binding.root
     }
+
+    // --- START OF CHANGE: New setup method ---
+    private fun setupRecyclerView() {
+        // The adapter is created once and the RecyclerView is configured.
+        val songAdapter = SongRecyclerView { clickedSong ->
+            Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
+
+            val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
+            songActionsDialog.show(childFragmentManager, "SongActionsDialog")
+        }
+        binding.searchResultsRecycler.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = songAdapter
+        }
+    }
+    // --- END OF CHANGE ---
 
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -44,7 +59,10 @@ class SearchFragment : Fragment() {
                 if (!queryString.isNullOrBlank()) {
                     lifecycleScope.launch {
                         binding.searchView.clearFocus()
-                        displaySearchResults(searchITunes(queryString))
+                        // --- START OF CHANGE: Get adapter and submit list ---
+                        val songs = searchITunes(queryString)
+                        (binding.searchResultsRecycler.adapter as? SongRecyclerView)?.submitList(songs)
+                        // --- END OF CHANGE ---
                     }
                 }
                 return true
@@ -61,20 +79,5 @@ class SearchFragment : Fragment() {
         _binding = null
     }
 
-    @UnstableApi
-    private fun displaySearchResults(songs: List<Song>) {
-        // --- START OF CHANGE ---
-        // Declare the adapter as a local variable. It does not need to be a class property.
-        val songAdapter = SongRecyclerView(songs) { clickedSong ->
-            // --- END OF CHANGE ---
-            Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
-
-            val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
-            songActionsDialog.show(childFragmentManager, "SongActionsDialog")
-        }
-        binding.searchResultsRecycler.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = songAdapter
-        }
-    }
+    // The old displaySearchResults function is no longer needed
 }
