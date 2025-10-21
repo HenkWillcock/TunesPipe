@@ -6,10 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentYourLibraryBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -34,14 +33,20 @@ class YourLibraryFragment : Fragment() {
         _binding = FragmentYourLibraryBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textYourLibrary
+        // 1. Create the adapter instance
+        val adapter = PlaylistAdapter()
 
+        // 2. Set up the RecyclerView
+        binding.playlistsRecyclerView.adapter = adapter
+        binding.playlistsRecyclerView.layoutManager = LinearLayoutManager(context)
+
+        // 3. Observe the LiveData and submit the new list to the adapter
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
-            textView.text = "You have ${playlists.size} playlists."
+            playlists?.let {
+                adapter.submitList(it)
+            }
         }
 
-        // I will add the FAB to the layout file in a moment.
-        // For now, let's set up its click listener.
         binding.fabAddPlaylist.setOnClickListener {
             showCreatePlaylistDialog()
         }
