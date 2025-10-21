@@ -4,16 +4,31 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.tunespipe.database.PlaylistDao
 import com.example.tunespipe.database.PlaylistWithSongs
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the PlaylistDetailFragment.
  */
-class PlaylistDetailViewModel(playlistDao: PlaylistDao, playlistId: Long) : ViewModel() {
-    // Hold a LiveData object of the playlist with its songs.
-    // This will automatically update when the data changes in the database.
-    val playlistWithSongs: LiveData<PlaylistWithSongs> = playlistDao.getPlaylistWithSongs(playlistId).asLiveData()
+class PlaylistDetailViewModel(
+    private val playlistDao: PlaylistDao, // Make dao private val
+    playlistId: Long
+) : ViewModel() {
+    // --- START OF FIX: LiveData is now nullable ---
+    val playlistWithSongs: LiveData<PlaylistWithSongs?> = playlistDao.getPlaylistWithSongs(playlistId).asLiveData()
+    // --- END OF FIX ---
+
+    fun deletePlaylist() {
+        // We can get the playlist object from the live data
+        val playlistToDelete = playlistWithSongs.value?.playlist
+        if (playlistToDelete != null) {
+            viewModelScope.launch {
+                playlistDao.delete(playlistToDelete)
+            }
+        }
+    }
 }
 
 /**

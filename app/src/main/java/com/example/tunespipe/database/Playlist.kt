@@ -1,15 +1,15 @@
 package com.example.tunespipe.database
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.Transaction // Import Transaction
+import androidx.room.Transaction
 import com.example.tunespipe.Song
 import kotlinx.coroutines.flow.Flow
-
 
 @Entity(tableName = "playlists")
 data class Playlist(
@@ -18,11 +18,13 @@ data class Playlist(
     val name: String
 )
 
-
 @Dao
 interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(playlist: Playlist)
+
+    @Delete
+    suspend fun delete(playlist: Playlist)
 
     @Query("SELECT * FROM playlists ORDER BY name ASC")
     fun getAllPlaylists(): Flow<List<Playlist>>
@@ -33,8 +35,6 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPlaylistSongCrossRef(crossRef: PlaylistSongCrossRef)
 
-    // --- START OF NEW CODE ---
-
     /**
      * Fetches a single playlist and all of its associated songs.
      * The @Transaction annotation is crucial here. It ensures that this complex
@@ -42,7 +42,7 @@ interface PlaylistDao {
      */
     @Transaction
     @Query("SELECT * FROM playlists WHERE id = :playlistId")
-    fun getPlaylistWithSongs(playlistId: Long): Flow<PlaylistWithSongs>
-
-    // --- END OF NEW CODE ---
+    // --- START OF FIX: Return a nullable Flow ---
+    fun getPlaylistWithSongs(playlistId: Long): Flow<PlaylistWithSongs?>
+    // --- END OF FIX ---
 }
