@@ -42,23 +42,24 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        // --- START OF NEW CODE: Keep "Your Library" tab selected ---
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            // When we navigate to the PlaylistDetailFragment, manually set
-            // the BottomNavigationView's selected item to the 'your_library' tab.
             if (destination.id == R.id.playlistDetailFragment) {
                 navView.menu.findItem(R.id.navigation_your_library).isChecked = true
             }
         }
-        // --- END OF NEW CODE ---
 
-        NewPipe.init(DownloaderImpl())  // Must be called on startup.
+        NewPipe.init(DownloaderImpl())
         setupNotificationManager()
-        MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
+
+        // --- START OF CHANGE: Initialize the Singleton correctly ---
+        // Create the player instance...
+        val player = ExoPlayer.Builder(this.applicationContext).build()
+        // ...then pass it to the Singleton to be configured.
+        MusicPlayerSingleton.initialize(player)
+        // --- END OF CHANGE ---
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        // This ensures that the Up button (back arrow in the toolbar) works correctly.
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 

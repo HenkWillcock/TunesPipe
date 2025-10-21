@@ -2,8 +2,6 @@ package com.example.tunespipe
 
 import android.app.Notification
 import android.content.Intent
-import android.util.Log
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -15,16 +13,7 @@ class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private lateinit var notificationManager: PlayerNotificationManager
 
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_ENDED) {
-                mediaSession?.player?.seekTo(0)
-                mediaSession?.player?.play()
-
-                // TODO play next song in playlist or queue if there is one.
-            }
-        }
-    }
+    // The old, buggy playerListener has been completely removed.
 
     override fun onCreate() {
         super.onCreate()
@@ -32,8 +21,8 @@ class MusicPlayerService : MediaSessionService() {
         val player = MusicPlayerSingleton.exoPlayer
             ?: throw IllegalStateException("ExoPlayer has not been initialized!")
 
-        player.addListener(playerListener)
-
+        // Do NOT add any listeners to the player here.
+        // This ensures the Singleton has exclusive control.
         mediaSession = MediaSession.Builder(this, player).build()
 
         notificationManager = PlayerNotificationManager.Builder(
@@ -41,7 +30,6 @@ class MusicPlayerService : MediaSessionService() {
             1001, // Notification ID
             NOTIFICATION_CHANNEL_ID
         )
-            // Use a NotificationListener to get access to the notification and manage the foreground state.
             .setNotificationListener(object : PlayerNotificationManager.NotificationListener {
                 override fun onNotificationPosted(
                     notificationId: Int,
@@ -77,7 +65,7 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     override fun onDestroy() {
-        mediaSession?.player?.removeListener(playerListener)
+        // There is no listener to remove anymore.
         mediaSession?.release()
         notificationManager.setPlayer(null)
         super.onDestroy()

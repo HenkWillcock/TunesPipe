@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player // <-- ADD THIS IMPORT
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
@@ -23,14 +24,36 @@ object MusicPlayerSingleton {
     private val _nowPlaying = MutableStateFlow<Song?>(null)
     val nowPlaying = _nowPlaying.asStateFlow()
 
+    // --- START OF NEW CODE: Centralized Player Logic ---
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) {
+                // Logic for what happens when a song ends now lives here, safely.
+                Log.d("MusicPlayerSingleton", "Song ended. Repeating.")
+                exoPlayer?.seekTo(0)
+                exoPlayer?.playWhenReady = true
+            }
+        }
+    }
+
+    /**
+     * Initializes the Singleton's player and attaches the central listener.
+     * This should be called once when the app starts.
+     */
+    fun initialize(player: ExoPlayer) {
+        if (this.exoPlayer == null) {
+            this.exoPlayer = player
+            player.addListener(playerListener)
+        }
+    }
+    // --- END OF NEW CODE ---
+
+
     @UnstableApi
     suspend fun playSong(context: Context, song: Song) {
-        // --- START OF THE FIX ---
-        // Immediately stop any currently playing audio and clear the player's state.
-        // This prevents the overlapping audio race condition.
+        // This existing logic is now safe because the listener won't fight it.
         exoPlayer?.stop()
         exoPlayer?.clearMediaItems()
-        // --- END OF THE FIX ---
 
         _nowPlaying.value = song // Show the spinner for the new song
 
@@ -60,7 +83,6 @@ object MusicPlayerSingleton {
     }
 
     private fun findBestAudioStreamUrl(song: Song): String? {
-        // ... (rest of the file is unchanged)
         val searchQuery = "${song.artistName} - ${song.trackName}"
         Log.d("TunesPipe", "Starting YouTube search for: $searchQuery")
         val youtubeService = NewPipe.getService(0)
