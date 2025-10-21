@@ -9,19 +9,13 @@ import com.example.tunespipe.database.PlaylistDao
 import com.example.tunespipe.database.PlaylistWithSongs
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the PlaylistDetailFragment.
- */
 class PlaylistDetailViewModel(
     private val playlistDao: PlaylistDao, // Make dao private val
     playlistId: Long
 ) : ViewModel() {
-    // --- START OF FIX: LiveData is now nullable ---
     val playlistWithSongs: LiveData<PlaylistWithSongs?> = playlistDao.getPlaylistWithSongs(playlistId).asLiveData()
-    // --- END OF FIX ---
 
     fun deletePlaylist() {
-        // We can get the playlist object from the live data
         val playlistToDelete = playlistWithSongs.value?.playlist
         if (playlistToDelete != null) {
             viewModelScope.launch {
@@ -31,9 +25,6 @@ class PlaylistDetailViewModel(
     }
 }
 
-/**
- * Factory for creating a PlaylistDetailViewModel with a constructor that takes a playlistId.
- */
 class PlaylistDetailViewModelFactory(
     private val playlistDao: PlaylistDao,
     private val playlistId: Long
