@@ -5,10 +5,10 @@ import android.app.NotificationManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.navigation.NavController // <-- ADD THIS IMPORT
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp // <-- ADD THIS IMPORT
+import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
@@ -20,10 +20,8 @@ const val NOTIFICATION_CHANNEL_ID = "tunespipe_media_playback"
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    // --- START OF NEW CODE ---
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
-    // --- END OF NEW CODE ---
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,20 +42,27 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
+        // --- START OF NEW CODE: Keep "Your Library" tab selected ---
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            // When we navigate to the PlaylistDetailFragment, manually set
+            // the BottomNavigationView's selected item to the 'your_library' tab.
+            if (destination.id == R.id.playlistDetailFragment) {
+                navView.menu.findItem(R.id.navigation_your_library).isChecked = true
+            }
+        }
+        // --- END OF NEW CODE ---
 
         NewPipe.init(DownloaderImpl())  // Must be called on startup.
         setupNotificationManager()
         MusicPlayerSingleton.exoPlayer = ExoPlayer.Builder(this.applicationContext).build()
     }
 
-    // --- START OF NEW CODE: Handle Up Navigation ---
     override fun onSupportNavigateUp(): Boolean {
         // This ensures that the Up button (back arrow in the toolbar) works correctly.
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
-    // --- END OF NEW CODE ---
 
-    fun setupNotificationManager() {
+    private fun setupNotificationManager() {
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
             "TunesPipe Media Playback",
