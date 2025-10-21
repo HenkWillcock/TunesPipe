@@ -1,22 +1,18 @@
 package com.example.tunespipe.ui.playlist_detail
 
 import android.os.Bundle
-import androidx.lifecycle.observe
-
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentPlaylistDetailBinding
 import com.example.tunespipe.ui.SongRecyclerView
-import kotlinx.coroutines.launch
+import com.example.tunespipe.ui.search.SongActionsDialogFragment // <-- ADD THIS IMPORT
 
 @UnstableApi
 class PlaylistDetailFragment : Fragment() {
@@ -45,14 +41,12 @@ class PlaylistDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- START OF CORRECTION ---
-        // Initialize the adapter with an empty list and an updated click handler.
+        // --- START OF CORRECTION: Revert to showing the dialog on click ---
         val songAdapter = SongRecyclerView(emptyList()) { clickedSong ->
-            // When a song is clicked, call the global play function.
-            // The adapter will automatically react to the state change and show the spinner.
-            lifecycleScope.launch {
-                MusicPlayerSingleton.playSong(requireContext(), clickedSong)
-            }
+            // When a song is clicked, show the actions dialog.
+            val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
+            // Use childFragmentManager as this is a fragment-within-a-fragment interaction.
+            songActionsDialog.show(childFragmentManager, "SongActionsDialog")
         }
         // --- END OF CORRECTION ---
 
