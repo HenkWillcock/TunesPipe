@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
-import com.example.tunespipe.ui.SongRecyclerView
+import com.example.tunespipe.ui.SongRecyclerViewAdapter
 import kotlinx.coroutines.launch
 
 
@@ -23,7 +23,7 @@ class SearchFragment : Fragment() {
     private val binding get() = _binding!!
     // --- START OF CHANGE ---
     // Remove the unnecessary class property for the adapter.
-    // var songAdapter: SongRecyclerView? = null
+    // var songAdapter: SongRecyclerViewAdapter? = null
     // --- END OF CHANGE ---
 
     override fun onCreateView(
@@ -65,7 +65,7 @@ class SearchFragment : Fragment() {
     private fun displaySearchResults(songs: List<Song>) {
         // --- START OF CHANGE ---
         // Declare the adapter as a local variable. It does not need to be a class property.
-        val songAdapter = SongRecyclerView(songs) { clickedSong ->
+        val songAdapter = SongRecyclerViewAdapter(songs) { clickedSong ->
             // --- END OF CHANGE ---
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 

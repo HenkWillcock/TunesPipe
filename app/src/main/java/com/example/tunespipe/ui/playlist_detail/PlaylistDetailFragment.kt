@@ -11,8 +11,8 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentPlaylistDetailBinding
-import com.example.tunespipe.ui.SongRecyclerView
-import com.example.tunespipe.ui.search.SongActionsDialogFragment // <-- ADD THIS IMPORT
+import com.example.tunespipe.ui.SongRecyclerViewAdapter
+import com.example.tunespipe.ui.search.SongActionsDialogFragment
 
 @UnstableApi
 class PlaylistDetailFragment : Fragment() {
@@ -42,7 +42,7 @@ class PlaylistDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // --- START OF CORRECTION: Revert to showing the dialog on click ---
-        val songAdapter = SongRecyclerView(emptyList()) { clickedSong ->
+        val songAdapter = SongRecyclerViewAdapter(emptyList()) { clickedSong ->
             // When a song is clicked, show the actions dialog.
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
             // Use childFragmentManager as this is a fragment-within-a-fragment interaction.
