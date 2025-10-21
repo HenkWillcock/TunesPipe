@@ -20,7 +20,6 @@ class PlaylistDetailFragment : Fragment() {
     private var _binding: FragmentPlaylistDetailBinding? = null
     private val binding get() = _binding!!
 
-    // Retrieve arguments passed from the navigation action
     private val args: PlaylistDetailFragmentArgs by navArgs()
 
     private val viewModel: PlaylistDetailViewModel by viewModels {
@@ -41,26 +40,18 @@ class PlaylistDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- START OF CORRECTION: Revert to showing the dialog on click ---
         val songAdapter = SongRecyclerViewAdapter(emptyList()) { clickedSong ->
-            // When a song is clicked, show the actions dialog.
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
-            // Use childFragmentManager as this is a fragment-within-a-fragment interaction.
             songActionsDialog.show(childFragmentManager, "SongActionsDialog")
         }
-        // --- END OF CORRECTION ---
 
         binding.songsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = songAdapter
         }
 
-        // Observe the data from the ViewModel
         viewModel.playlistWithSongs.observe(viewLifecycleOwner) { playlistWithSongs ->
             if (playlistWithSongs != null) {
-                // Set the activity title to the playlist name
-                activity?.title = playlistWithSongs.playlist.name
-                // Update the adapter with the list of songs
                 songAdapter.updateSongs(playlistWithSongs.songs)
             }
         }
@@ -68,8 +59,6 @@ class PlaylistDetailFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Reset the title when leaving the screen
-        activity?.title = "Your Library"
         _binding = null
     }
 }

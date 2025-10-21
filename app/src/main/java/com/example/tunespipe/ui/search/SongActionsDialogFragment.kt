@@ -47,7 +47,6 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- START OF UPDATED CODE ---
         // Set text for title and artist
         binding.songTitleText.text = song.trackName
         binding.artistNameText.text = song.artistName
@@ -57,7 +56,6 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             .load(song.artworkUrl)
             .placeholder(R.drawable.ic_launcher_foreground) // Optional: a placeholder image
             .into(binding.artworkImage)
-        // --- END OF UPDATED CODE ---
 
         binding.playNowButton.setOnClickListener {
             dismiss()

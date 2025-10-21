@@ -16,11 +16,9 @@
         android:name="com.example.tunespipe.ui.your_library.YourLibraryFragment"
         android:label="@string/title_your_library"
         tools:layout="@layout/fragment_your_library" >
-        <!-- START OF CHANGE: Define the action to navigate from this fragment -->
         <action
             android:id="@+id/action_your_library_to_playlist_detail"
             app:destination="@id/playlistDetailFragment" />
-        <!-- END OF CHANGE -->
     </fragment>
 
     <fragment
@@ -29,17 +27,17 @@
         android:label="@string/title_donate"
         tools:layout="@layout/fragment_donate" />
 
-    <!-- START OF CHANGE: Add the new fragment as a destination -->
     <fragment
         android:id="@+id/playlistDetailFragment"
         android:name="com.example.tunespipe.ui.playlist_detail.PlaylistDetailFragment"
-        android:label="Playlist"
-        tools:layout="@layout/fragment_playlist_detail">
-        <!-- Define the argument that this destination expects to receive -->
-        <argument
-            android:name="playlistId"
-            app:argType="long" />
-    </fragment>
-    <!-- END OF CHANGE -->
+        tools:layout="@layout/fragment_playlist_detail"
+        android:label="{playlistName}" >
+    <argument
+        android:name="playlistId"
+        app:argType="long" />
+    <argument
+        android:name="playlistName"
+        app:argType="string" />
+</fragment>
 
-</navigation>
+    </navigation>
