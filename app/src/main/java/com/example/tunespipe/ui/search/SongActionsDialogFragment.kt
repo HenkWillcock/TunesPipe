@@ -8,12 +8,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
+import com.example.tunespipe.AutoplayStrategy
 import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.database.Playlist
 import com.example.tunespipe.databinding.FragmentSongActionsBinding
+import com.example.tunespipe.ui.playlist_detail.PlaylistDetailFragment
 import com.example.tunespipe.ui.your_library.YourLibraryViewModel
 import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -47,21 +49,31 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Set text for title and artist
         binding.songTitleText.text = song.trackName
         binding.artistNameText.text = song.artistName
 
-        // Load artwork into the new ImageView using Glide
         Glide.with(this)
             .load(song.artworkUrl)
-            .placeholder(R.drawable.ic_launcher_foreground) // Optional: a placeholder image
+            .placeholder(R.drawable.ic_launcher_foreground)
             .into(binding.artworkImage)
 
         binding.playNowButton.setOnClickListener {
             dismiss()
+            // --- START OF REFACTORED LOGIC ---
             parentFragment?.lifecycleScope?.launch {
-                MusicPlayerSingleton.playSong(requireContext(), song)
+                // Determine which strategy to use based on the parent fragment
+                val strategy = if (parentFragment is PlaylistDetailFragment) {
+                    // We are in a playlist, so create the SHUFFLE strategy with the song list
+                    val playlistFragment = parentFragment as PlaylistDetailFragment
+                    val playlistSongs = playlistFragment.viewModel.playlistWithSongs.value?.songs ?: emptyList()
+                    AutoplayStrategy.ShufflePlaylist(playlistSongs)
+                } else {
+                    // We are likely in search, so use the simple REPEAT_ONE strategy
+                    AutoplayStrategy.RepeatOne
+                }
+                MusicPlayerSingleton.playSong(requireContext(), song, strategy)
             }
+            // --- END OF REFACTORED LOGIC ---
         }
 
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->

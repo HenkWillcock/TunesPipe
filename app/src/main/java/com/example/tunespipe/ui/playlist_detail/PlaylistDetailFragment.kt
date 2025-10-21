@@ -31,7 +31,7 @@ class PlaylistDetailFragment : Fragment() {
 
     private val args: PlaylistDetailFragmentArgs by navArgs()
 
-    private val viewModel: PlaylistDetailViewModel by viewModels {
+    public val viewModel: PlaylistDetailViewModel by viewModels {
         PlaylistDetailViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao(),
             args.playlistId

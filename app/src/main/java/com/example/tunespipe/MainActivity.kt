@@ -32,8 +32,6 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = binding.navView
 
         navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.navigation_search, R.id.navigation_your_library, R.id.navigation_donate
@@ -48,15 +46,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- START OF CHANGE ---
-        // Pass the shared HttpClient to the DownloaderImpl constructor.
         NewPipe.init(DownloaderImpl(HttpClient.instance))
-        // --- END OF CHANGE ---
 
         setupNotificationManager()
 
+        // --- START OF FIX: Pass the context to initialize ---
         val player = ExoPlayer.Builder(this.applicationContext).build()
-        MusicPlayerSingleton.initialize(player)
+        MusicPlayerSingleton.initialize(player, this.applicationContext)
+        // --- END OF FIX ---
     }
 
     override fun onSupportNavigateUp(): Boolean {
