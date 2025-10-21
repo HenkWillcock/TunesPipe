@@ -1,19 +1,15 @@
 package com.example.tunespipe
+
 import android.util.Log
 import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
-import okhttp3.Dns
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.Inet4Address
-import java.net.InetAddress
-
 
 @Parcelize
 @Entity(tableName = "songs") // Tell Room this is a database table
@@ -28,17 +24,10 @@ data class Song(
 
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
-
-        val client = OkHttpClient
-            .Builder()
-            .dns(
-                // It's crucial we use IPv4
-                object : Dns {
-                    override fun lookup(hostname: String): List<InetAddress> {
-                        return Dns.SYSTEM.lookup(hostname).filter { Inet4Address::class.java.isInstance(it) }
-                    }
-                }
-            ).build()
+        // --- START OF CORRECTION ---
+        // This is the correct reference to our shared HttpClient object.
+        val client = HttpClient.instance
+        // --- END OF CORRECTION ---
 
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
             .addQueryParameter("term", searchTerm)
@@ -63,8 +52,6 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
             val songList = mutableListOf<Song>()
             for (i in 0 until resultsArray.length()) {
                 val songObject = resultsArray.getJSONObject(i)
-                // --- START OF CHANGE ---
-                // We now correctly parse trackId and handle a potentially null previewUrl
                 songList.add(
                     Song(
                         trackId = songObject.optString("trackId"), // Get the unique ID
@@ -76,7 +63,6 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
                         durationMillis = songObject.optLong("trackTimeMillis", 0),
                     )
                 )
-                // --- END OF CHANGE ---
             }
             songList
         } catch (e: Exception) {

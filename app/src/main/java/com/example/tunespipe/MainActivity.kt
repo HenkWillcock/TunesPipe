@@ -48,15 +48,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        NewPipe.init(DownloaderImpl())
+        // --- START OF CHANGE ---
+        // Pass the shared HttpClient to the DownloaderImpl constructor.
+        NewPipe.init(DownloaderImpl(HttpClient.instance))
+        // --- END OF CHANGE ---
+
         setupNotificationManager()
 
-        // --- START OF CHANGE: Initialize the Singleton correctly ---
-        // Create the player instance...
         val player = ExoPlayer.Builder(this.applicationContext).build()
-        // ...then pass it to the Singleton to be configured.
         MusicPlayerSingleton.initialize(player)
-        // --- END OF CHANGE ---
     }
 
     override fun onSupportNavigateUp(): Boolean {

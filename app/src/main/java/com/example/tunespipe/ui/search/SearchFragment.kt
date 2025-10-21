@@ -21,7 +21,10 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    var songAdapter: SongRecyclerView? = null
+    // --- START OF CHANGE ---
+    // Remove the unnecessary class property for the adapter.
+    // var songAdapter: SongRecyclerView? = null
+    // --- END OF CHANGE ---
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,7 +43,7 @@ class SearchFragment : Fragment() {
             override fun onQueryTextSubmit(queryString: String?): Boolean {
                 if (!queryString.isNullOrBlank()) {
                     lifecycleScope.launch {
-                        binding.searchView.clearFocus()  // Stops SearchView handling event itself
+                        binding.searchView.clearFocus()
                         displaySearchResults(searchITunes(queryString))
                     }
                 }
@@ -48,8 +51,7 @@ class SearchFragment : Fragment() {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                // TODO search real time.
-                return false // Let the SearchView handle its default behavior
+                return false
             }
         })
     }
@@ -61,7 +63,10 @@ class SearchFragment : Fragment() {
 
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
-        songAdapter = SongRecyclerView(songs) { clickedSong ->
+        // --- START OF CHANGE ---
+        // Declare the adapter as a local variable. It does not need to be a class property.
+        val songAdapter = SongRecyclerView(songs) { clickedSong ->
+            // --- END OF CHANGE ---
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
