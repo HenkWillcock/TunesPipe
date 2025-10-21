@@ -4,96 +4,97 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import androidx.fragment.app.viewModels // <-- ADD THIS IMPORT
 import androidx.lifecycle.lifecycleScope
-import com.example.tunespipe.R
+import androidx.media3.common.util.UnstableApi
+import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.Song
-import com.example.tunespipe.database.AppDatabase
-import com.example.tunespipe.database.PlaylistSongCrossRef
+import com.example.tunespipe.database.AppDatabase // <-- ADD THIS IMPORT
+import com.example.tunespipe.database.Playlist // <-- ADD THIS IMPORT
+import com.example.tunespipe.databinding.FragmentSongActionsBinding
+import com.example.tunespipe.ui.your_library.YourLibraryViewModel // <-- ADD THIS IMPORT
+import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory // <-- ADD THIS IMPORT
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.divider.MaterialDivider
-import kotlinx.coroutines.flow.first
+import com.google.android.material.button.MaterialButton // <-- ADD THIS IMPORT
 import kotlinx.coroutines.launch
 
+@UnstableApi
 class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
-    private lateinit var song: Song
+    private var _binding: FragmentSongActionsBinding? = null
+    private val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Retrieve the Song object that was passed to this dialog
-        song = arguments?.getParcelable(ARG_SONG) ?: return
+    // Use a lazy delegate to ensure song is not null
+    private val song: Song by lazy {
+        requireArguments().getParcelable(ARG_SONG)!!
     }
+
+    // --- START OF NEW CODE: ViewModel for playlists ---
+    private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
+        YourLibraryViewModelFactory(
+            AppDatabase.getDatabase(requireContext()).playlistDao()
+        )
+    }
+    // --- END OF NEW CODE ---
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_song_actions, container, false)
-        val rootLayout = view as LinearLayout // The root of your layout is a LinearLayout
-
-        // --- START OF UI SETUP ---
-        // Populate the views that are already in your XML
-        view.findViewById<TextView>(R.id.song_title_text).text = song.trackName
-        view.findViewById<TextView>(R.id.artist_name_text).text = song.artistName
-        view.findViewById<MaterialButton>(R.id.play_now_button).setOnClickListener {
-            // Your existing MusicPlayerSingleton logic would go here
-            Toast.makeText(context, "Playing ${song.trackName}", Toast.LENGTH_SHORT).show()
-            dismiss()
-        }
-
-        val dao = AppDatabase.getDatabase(requireContext()).playlistDao()
-
-        // --- START OF DYNAMIC BUTTON CREATION ---
-        lifecycleScope.launch {
-            val playlists = dao.getAllPlaylists().first()
-
-            if (playlists.isNotEmpty()) {
-                // Add a divider and a title before listing the playlists
-                rootLayout.addView(MaterialDivider(requireContext()).apply {
-                    val margin = (16 * resources.displayMetrics.density).toInt()
-                    (layoutParams as? ViewGroup.MarginLayoutParams)?.setMargins(0, margin, 0, margin)
-                })
-                rootLayout.addView(TextView(context).apply {
-                    text = "Add to playlist"
-                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
-                })
-
-                // For each playlist, create and add a button
-                playlists.forEach { playlist ->
-                    val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                        text = "Add to '${playlist.name}'"
-                        setOnClickListener { addSongToPlaylist(playlist.id, song) }
-                    }
-                    rootLayout.addView(button)
-                }
-            }
-        }
-        // --- END OF DYNAMIC BUTTON CREATION ---
-
-        return view
+    ): View {
+        _binding = FragmentSongActionsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    private fun addSongToPlaylist(playlistId: Long, song: Song) {
-        lifecycleScope.launch {
-            val dao = AppDatabase.getDatabase(requireContext()).playlistDao()
-            // 1. First, save the Song object to the 'songs' table.
-            dao.insertSong(song)
-            // 2. Then, create the link between the playlist and the song.
-            dao.insertPlaylistSongCrossRef(PlaylistSongCrossRef(playlistId, song.trackId))
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-            Toast.makeText(context, "'${song.trackName}' added to playlist!", Toast.LENGTH_SHORT).show()
-            dismiss() // Close the dialog
+        binding.songTitleText.text = song.trackName
+        binding.artistNameText.text = song.artistName
+
+        // --- THIS PART IS UNCHANGED AND WILL CONTINUE TO WORK ---
+        binding.playNowButton.setOnClickListener {
+            val songToPlay = song
+            (parentFragment as? SearchFragment)?.songAdapter?.setPlaying(songToPlay)
+            dismiss()
+            parentFragment?.lifecycleScope?.launch {
+                MusicPlayerSingleton.playSong(requireContext(), songToPlay)
+            }
         }
+        // --- END OF UNCHANGED PART ---
+
+        // --- START OF NEW CODE: Observe playlists and add buttons ---
+        yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
+            // Clear any old buttons before adding new ones
+            binding.playlistButtonsContainer.removeAllViews()
+            // For each playlist, create and add a new button
+            playlists.forEach { playlist ->
+                addPlaylistButton(playlist)
+            }
+        }
+        // --- END OF NEW CODE ---
+    }
+
+    // --- START OF NEW CODE: Helper function to create and add a button ---
+    private fun addPlaylistButton(playlist: Playlist) {
+        val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Add to ${playlist.name}"
+            setOnClickListener {
+                yourLibraryViewModel.addSongToPlaylist(song, playlist.id)
+                dismiss()
+            }
+        }
+        binding.playlistButtonsContainer.addView(button)
+    }
+    // --- END OF NEW CODE ---
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {
         private const val ARG_SONG = "song"
 
-        // A clean way to create an instance of this dialog and pass the Song data to it
         fun newInstance(song: Song): SongActionsDialogFragment {
             return SongActionsDialogFragment().apply {
                 arguments = Bundle().apply {
