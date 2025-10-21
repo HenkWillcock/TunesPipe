@@ -1,12 +1,15 @@
 package com.example.tunespipe.ui
 
-import android.graphics.Typeface // <-- ADD THIS IMPORT
+import android.graphics.Typeface
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat // <-- ADD THIS IMPORT
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tunespipe.MusicPlayerSingleton
@@ -17,11 +20,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class SongRecyclerView(
-    private var songs: List<Song>,
     private val onSongClicked: (Song) -> Unit
-) : RecyclerView.Adapter<SongRecyclerView.SongViewHolder>() {
+) : ListAdapter<Song, SongRecyclerView.SongViewHolder>(SongsComparator()) {
 
-    private var playingSong: Song? = null // Renamed for clarity from loadingSong
+    private var playingSong: Song? = null
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
@@ -29,14 +31,17 @@ class SongRecyclerView(
         lifecycleOwner?.lifecycleScope?.let { scope ->
             MusicPlayerSingleton.nowPlaying
                 .onEach { nowPlayingSong ->
+                    val oldPlayingSong = playingSong
                     playingSong = nowPlayingSong
-                    notifyDataSetChanged()
+                    // Instead of redrawing everything, we find the items that changed and update only them.
+                    val oldIndex = currentList.indexOf(oldPlayingSong)
+                    if (oldIndex != -1) notifyItemChanged(oldIndex)
+                    val newIndex = currentList.indexOf(nowPlayingSong)
+                    if (newIndex != -1) notifyItemChanged(newIndex)
                 }
                 .launchIn(scope)
         }
     }
-
-    class SongViewHolder(val binding: ItemSongResultBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
         val binding = ItemSongResultBinding.inflate(
@@ -48,38 +53,54 @@ class SongRecyclerView(
     }
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
-        val song = songs[position]
-        holder.binding.trackName.text = song.trackName
-        holder.binding.artistName.text = song.artistName
+        val song = getItem(position)
+        holder.bind(song, song == playingSong, onSongClicked)
+    }
 
-        Glide.with(holder.itemView.context)
-            .load(song.artworkUrl)
-            .placeholder(R.drawable.ic_launcher_foreground)
-            .into(holder.binding.artworkImage)
+    class SongViewHolder(private val binding: ItemSongResultBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(song: Song, isPlaying: Boolean, onSongClicked: (Song) -> Unit) {
+            binding.trackName.text = song.trackName
+            binding.artistName.text = song.artistName
 
-        if (playingSong == song) {
-            holder.binding.loadingSpinner.visibility = View.VISIBLE
-            holder.binding.trackName.setTypeface(null, Typeface.BOLD)
-            holder.binding.trackName.setTextColor(
-                ContextCompat.getColor(holder.itemView.context, R.color.teal_700)
-            )
-        } else {
-            holder.binding.loadingSpinner.visibility = View.GONE
-            holder.binding.trackName.setTypeface(null, Typeface.NORMAL)
-            holder.binding.trackName.setTextColor(
-                ContextCompat.getColor(holder.itemView.context, android.R.color.white)
-            )
-        }
+            Glide.with(itemView.context)
+                .load(song.artworkUrl)
+                .placeholder(R.drawable.ic_launcher_foreground)
+                .into(binding.artworkImage)
 
-        holder.itemView.setOnClickListener {
-            onSongClicked(song)
+            binding.loadingSpinner.visibility = if (isPlaying) View.VISIBLE else View.GONE
+
+            // --- START OF REVERTED LOGIC ---
+            if (isPlaying) {
+                // Apply "now playing" styles with a hardcoded color
+                binding.trackName.setTypeface(null, Typeface.BOLD)
+                binding.trackName.setTextColor(
+                    ContextCompat.getColor(itemView.context, R.color.teal_200)
+                )
+            } else {
+                // Apply default styles
+                binding.trackName.setTypeface(null, Typeface.NORMAL)
+                // Using android.R.color.white as the default. Change if you have a different default.
+                binding.trackName.setTextColor(
+                    ContextCompat.getColor(itemView.context, android.R.color.white)
+                )
+            }
+            // --- END OF REVERTED LOGIC ---
+
+            itemView.setOnClickListener {
+                onSongClicked(song)
+            }
         }
     }
 
-    override fun getItemCount() = songs.size
+    class SongsComparator : DiffUtil.ItemCallback<Song>() {
+        override fun areItemsTheSame(oldItem: Song, newItem: Song): Boolean {
+            // ID is the unique identifier
+            return oldItem.trackId == newItem.trackId
+        }
 
-    fun updateSongs(newSongs: List<Song>) {
-        this.songs = newSongs
-        notifyDataSetChanged()
+        override fun areContentsTheSame(oldItem: Song, newItem: Song): Boolean {
+            // Check if the contents are the same. A data class `equals` check is perfect here.
+            return oldItem == newItem
+        }
     }
 }
