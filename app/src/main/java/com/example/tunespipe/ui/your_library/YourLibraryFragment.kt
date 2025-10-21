@@ -67,7 +67,7 @@ class YourLibraryFragment : Fragment() {
         val context = requireContext()
         val editText = EditText(context).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
-            hint = "Playlist Name"
+            hint = "Enter playlist name..."
         }
 
         MaterialAlertDialogBuilder(context)
