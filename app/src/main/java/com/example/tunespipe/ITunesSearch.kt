@@ -1,6 +1,8 @@
 package com.example.tunespipe
 import android.util.Log
 import android.os.Parcelable
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 import okhttp3.Dns
 import okhttp3.OkHttpClient
@@ -14,14 +16,15 @@ import java.net.InetAddress
 
 
 @Parcelize
+@Entity(tableName = "songs") // Tell Room this is a database table
 data class Song(
+    @PrimaryKey val trackId: String, // Mark trackId as the unique Primary Key
     val trackName: String,
     val artistName: String,
     val artworkUrl: String,
-    val previewUrl: String,
+    val previewUrl: String?, // Make this nullable to handle cases where it's missing
     val durationMillis: Long,
 ) : Parcelable
-
 
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
@@ -60,8 +63,11 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
             val songList = mutableListOf<Song>()
             for (i in 0 until resultsArray.length()) {
                 val songObject = resultsArray.getJSONObject(i)
+                // --- START OF CHANGE ---
+                // We now correctly parse trackId and handle a potentially null previewUrl
                 songList.add(
                     Song(
+                        trackId = songObject.optString("trackId"), // Get the unique ID
                         trackName = songObject.optString("trackName", "Unknown Track"),
                         artistName = songObject.optString("artistName", "Unknown Artist"),
                         artworkUrl = songObject.optString("artworkUrl100", "")
@@ -70,6 +76,7 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
                         durationMillis = songObject.optLong("trackTimeMillis", 0),
                     )
                 )
+                // --- END OF CHANGE ---
             }
             songList
         } catch (e: Exception) {
