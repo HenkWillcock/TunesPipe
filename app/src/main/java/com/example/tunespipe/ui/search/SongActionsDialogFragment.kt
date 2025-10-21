@@ -4,18 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels // <-- ADD THIS IMPORT
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.Song
-import com.example.tunespipe.database.AppDatabase // <-- ADD THIS IMPORT
-import com.example.tunespipe.database.Playlist // <-- ADD THIS IMPORT
+import com.example.tunespipe.database.AppDatabase
+import com.example.tunespipe.database.Playlist
 import com.example.tunespipe.databinding.FragmentSongActionsBinding
-import com.example.tunespipe.ui.your_library.YourLibraryViewModel // <-- ADD THIS IMPORT
-import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory // <-- ADD THIS IMPORT
+import com.example.tunespipe.ui.your_library.YourLibraryViewModel
+import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.button.MaterialButton // <-- ADD THIS IMPORT
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -29,13 +29,11 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         requireArguments().getParcelable(ARG_SONG)!!
     }
 
-    // --- START OF NEW CODE: ViewModel for playlists ---
     private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
         YourLibraryViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao()
         )
     }
-    // --- END OF NEW CODE ---
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,28 +51,26 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
         // --- THIS PART IS UNCHANGED AND WILL CONTINUE TO WORK ---
         binding.playNowButton.setOnClickListener {
-            val songToPlay = song
-            (parentFragment as? SearchFragment)?.songAdapter?.setPlaying(songToPlay)
+            // --- START OF CORRECTION ---
+            // Remove the direct, fragment-specific call to setPlaying().
+            // (parentFragment as? SearchFragment)?.songAdapter?.setPlaying(songToPlay)
             dismiss()
             parentFragment?.lifecycleScope?.launch {
-                MusicPlayerSingleton.playSong(requireContext(), songToPlay)
+                // Simply call the global playSong method. It will handle updating the spinner state.
+                MusicPlayerSingleton.playSong(requireContext(), song)
             }
+            // --- END OF CORRECTION ---
         }
         // --- END OF UNCHANGED PART ---
 
-        // --- START OF NEW CODE: Observe playlists and add buttons ---
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
-            // Clear any old buttons before adding new ones
             binding.playlistButtonsContainer.removeAllViews()
-            // For each playlist, create and add a new button
             playlists.forEach { playlist ->
                 addPlaylistButton(playlist)
             }
         }
-        // --- END OF NEW CODE ---
     }
 
-    // --- START OF NEW CODE: Helper function to create and add a button ---
     private fun addPlaylistButton(playlist: Playlist) {
         val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Add to ${playlist.name}"
@@ -85,7 +81,6 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         }
         binding.playlistButtonsContainer.addView(button)
     }
-    // --- END OF NEW CODE ---
 
     override fun onDestroyView() {
         super.onDestroyView()

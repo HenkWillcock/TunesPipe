@@ -7,6 +7,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
+// --- START OF NEW CODE: Add imports for StateFlow ---
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+// --- END OF NEW CODE ---
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.search.SearchInfo
@@ -18,8 +22,16 @@ import kotlin.math.abs
 object MusicPlayerSingleton {
     var exoPlayer: ExoPlayer? = null
 
+    // --- START OF NEW CODE: Global state for the playing/loading song ---
+    private val _nowPlaying = MutableStateFlow<Song?>(null)
+    val nowPlaying = _nowPlaying.asStateFlow() // This is the public, read-only flow for UI to observe
+    // --- END OF NEW CODE ---
+
     @UnstableApi
     suspend fun playSong(context: Context, song: Song) {
+        // --- START OF CHANGE: Update global state when play begins ---
+        _nowPlaying.value = song // Set the current song to show the spinner everywhere
+        // --- END OF CHANGE ---
         try {
             // Find the best matching stream URL by checking duration
             val streamUrl = withContext(Dispatchers.IO) {
@@ -40,10 +52,12 @@ object MusicPlayerSingleton {
             } else {
                 // TODO a toast
                 Log.w("TunesPipe", "No suitable audio stream found after checking YouTube results.")
+                _nowPlaying.value = null // Clear state if playing fails
             }
         } catch (e: Exception) {
             // TODO a toast
             Log.e("TunesPipe", "An error occurred during playSongFromSearch", e)
+            _nowPlaying.value = null // Clear state on error
         }
     }
 

@@ -1,18 +1,24 @@
 package com.example.tunespipe.ui.playlist_detail
 
 import android.os.Bundle
+import androidx.lifecycle.observe
+
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tunespipe.MusicPlayerSingleton
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentPlaylistDetailBinding
 import com.example.tunespipe.ui.SongRecyclerView
-import com.example.tunespipe.ui.search.SongActionsDialogFragment
+import kotlinx.coroutines.launch
 
+@UnstableApi
 class PlaylistDetailFragment : Fragment() {
 
     private var _binding: FragmentPlaylistDetailBinding? = null
@@ -40,11 +46,13 @@ class PlaylistDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // --- START OF CORRECTION ---
-        // Initialize the adapter with an empty list AND the click handler.
+        // Initialize the adapter with an empty list and an updated click handler.
         val songAdapter = SongRecyclerView(emptyList()) { clickedSong ->
-            // When a song is clicked, show the same actions dialog
-            val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
-            songActionsDialog.show(childFragmentManager, "SongActionsDialog")
+            // When a song is clicked, call the global play function.
+            // The adapter will automatically react to the state change and show the spinner.
+            lifecycleScope.launch {
+                MusicPlayerSingleton.playSong(requireContext(), clickedSong)
+            }
         }
         // --- END OF CORRECTION ---
 
