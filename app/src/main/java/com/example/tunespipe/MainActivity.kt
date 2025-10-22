@@ -50,10 +50,10 @@ class MainActivity : AppCompatActivity() {
 
         setupNotificationManager()
 
-        // --- START OF FIX: Pass the context to initialize ---
-        val player = ExoPlayer.Builder(this.applicationContext).build()
-        MusicPlayerSingleton.initialize(player, this.applicationContext)
-        // --- END OF FIX ---
+        MusicPlayerSingleton.initialize(
+            ExoPlayer.Builder(this.applicationContext).build(),
+            this.applicationContext,
+        )
     }
 
     override fun onSupportNavigateUp(): Boolean {
