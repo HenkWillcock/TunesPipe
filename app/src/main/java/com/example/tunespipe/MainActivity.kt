@@ -47,13 +47,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         NewPipe.init(DownloaderImpl(HttpClient.instance))
-
         setupNotificationManager()
-
-        MusicPlayerSingleton.initialize(
-            ExoPlayer.Builder(this.applicationContext).build(),
-            this.applicationContext,
-        )
+        MusicPlayerSingleton.initialize(this.applicationContext)
     }
 
     override fun onSupportNavigateUp(): Boolean {

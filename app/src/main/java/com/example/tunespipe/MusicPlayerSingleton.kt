@@ -55,11 +55,11 @@ object MusicPlayerSingleton {
         }
     }
 
-    fun initialize(player: ExoPlayer, context: Context) {
+    fun initialize(context: Context) {
         if (this.exoPlayer == null) {
-            this.exoPlayer = player
             this.applicationContext = context.applicationContext
-            player.addListener(playerListener)
+            this.exoPlayer = ExoPlayer.Builder(context).build()
+            this.exoPlayer!!.addListener(playerListener)
         }
     }
 
