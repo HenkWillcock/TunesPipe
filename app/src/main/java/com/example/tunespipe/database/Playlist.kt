@@ -42,7 +42,5 @@ interface PlaylistDao {
      */
     @Transaction
     @Query("SELECT * FROM playlists WHERE id = :playlistId")
-    // --- START OF FIX: Return a nullable Flow ---
     fun getPlaylistWithSongs(playlistId: Long): Flow<PlaylistWithSongs?>
-    // --- END OF FIX ---
 }

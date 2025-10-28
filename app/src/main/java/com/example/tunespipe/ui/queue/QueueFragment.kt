@@ -35,7 +35,6 @@ class QueueFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Combine nowPlaying and the (yet to be created) strategy flow
             playerViewModel.nowPlaying.combine(playerViewModel.strategy) { song, strategy ->
                 Pair(song, strategy)
             }.collect { (song, strategy) ->
@@ -55,7 +54,8 @@ class QueueFragment : Fragment() {
                             binding.strategyText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_repeat_one_24, 0, 0, 0)
                         }
                         is AutoplayStrategy.ShufflePlaylist -> {
-                            binding.strategyText.text = "Shuffle Playlist"
+                            val playlistName = strategy.playlistWithSongs.playlist.name
+                            binding.strategyText.text = "Shuffle Playlist: $playlistName"
                             binding.strategyText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_shuffle_24, 0, 0, 0)
                         }
                         else -> {

@@ -2,6 +2,7 @@ package com.example.tunespipe
 
 import android.os.Bundle
 import android.util.Log
+
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -79,7 +80,8 @@ class MusicPlayerService : MediaSessionService() {
                         player.playWhenReady = true
                     }
                     is AutoplayStrategy.ShufflePlaylist -> {
-                        val nextSong = strategy.playlist.filter { it != currentSong }.randomOrNull()
+                        val playlistSongs = strategy.playlistWithSongs.songs
+                        val nextSong = playlistSongs.filter { it != currentSong }.randomOrNull()
                         if (nextSong != null) {
                             serviceScope.launch { playSongInternal(nextSong, strategy) }
                         }
@@ -98,8 +100,6 @@ class MusicPlayerService : MediaSessionService() {
             .setCallback(sessionCallback)
             .build()
 
-        // Use the service's built-in notification provider.
-        // This completely removes the need for PlayerNotificationManager.
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
     }
 

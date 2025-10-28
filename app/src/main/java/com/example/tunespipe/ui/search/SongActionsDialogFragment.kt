@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.activityViewModels // Use activityViewModels to share with MainActivity
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
-import com.example.tunespipe.MusicPlayerViewModel // Import the new ViewModel
+import com.example.tunespipe.MusicPlayerViewModel
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.database.AppDatabase
@@ -31,14 +31,12 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         requireArguments().getParcelable(ARG_SONG)!!
     }
 
-    // This ViewModel is for database operations
     private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
         YourLibraryViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao()
         )
     }
 
-    // Get the shared player ViewModel from the Activity
     private val playerViewModel: MusicPlayerViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -64,12 +62,11 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             dismiss()
             val strategy = if (parentFragment is PlaylistDetailFragment) {
                 val playlistFragment = parentFragment as PlaylistDetailFragment
-                val playlistSongs = playlistFragment.viewModel.playlistWithSongs.value?.songs ?: emptyList()
-                AutoplayStrategy.ShufflePlaylist(playlistSongs)
+                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value
+                AutoplayStrategy.ShufflePlaylist(playlistWithSongs!!)
             } else {
                 AutoplayStrategy.RepeatOne
             }
-            // Use the ViewModel to play the song
             playerViewModel.playSong(song, strategy)
         }
 
