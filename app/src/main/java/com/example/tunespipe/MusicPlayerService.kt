@@ -164,6 +164,10 @@ class MusicPlayerService : MediaSessionService() {
 
         for (item in itemsToCheck) {
             if (item is StreamInfoItem) {
+                if (item.name.contains("live", ignoreCase = true)) {
+                    continue
+                }
+
                 val youtubeDurationSeconds = item.duration
                 if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= 3) {
                     val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
