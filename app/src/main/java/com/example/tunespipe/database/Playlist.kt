@@ -43,4 +43,17 @@ interface PlaylistDao {
     @Transaction
     @Query("SELECT * FROM playlists WHERE id = :playlistId")
     fun getPlaylistWithSongs(playlistId: Long): Flow<PlaylistWithSongs?>
+
+    /**
+     * Checks if a specific song is already in a specific playlist.
+     * Returns 1 if the relationship exists, 0 otherwise.
+     */
+    @Query("SELECT COUNT(*) FROM PlaylistSongCrossRef WHERE playlistId = :playlistId AND songId = :songId")
+    suspend fun doesSongExistInPlaylist(playlistId: Long, songId: String): Int
+
+    /**
+     * Removes a song from a playlist by deleting the entry in the cross-reference table.
+     */
+    @Query("DELETE FROM PlaylistSongCrossRef WHERE playlistId = :playlistId AND songId = :songId")
+    suspend fun removeSongFromPlaylist(playlistId: Long, songId: String)
 }

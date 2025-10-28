@@ -6,7 +6,6 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/title_search" />
 
-    <!-- This is the new item for the Queue tab -->
     <item
         android:id="@+id/navigation_queue"
         android:icon="@drawable/ic_queue_music_24"
@@ -19,7 +18,7 @@
 
     <item
         android:id="@+id/navigation_donate"
-        android:icon="@android:drawable/gallery_thumb"
+        android:icon="@drawable/ic_attach_money_24"
         android:title="@string/title_donate" />
 
 </menu>

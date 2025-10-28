@@ -20,14 +20,20 @@ class YourLibraryViewModel(private val playlistDao: PlaylistDao) : ViewModel() {
         }
     }
 
-    // --- START OF NEW CODE ---
     fun addSongToPlaylist(song: Song, playlistId: Long) {
         viewModelScope.launch {
-            // First, ensure the song exists in the 'songs' table so it can be referenced.
             playlistDao.insertSong(song)
-            // Then, create the link in the cross-reference table.
             playlistDao.insertPlaylistSongCrossRef(PlaylistSongCrossRef(playlistId = playlistId, songId = song.trackId))
         }
     }
-    // --- END OF NEW CODE ---
+
+    suspend fun isSongInPlaylist(songId: String, playlistId: Long): Boolean {
+        return playlistDao.doesSongExistInPlaylist(playlistId, songId) > 0
+    }
+
+    fun removeSongFromPlaylist(songId: String, playlistId: Long) {
+        viewModelScope.launch {
+            playlistDao.removeSongFromPlaylist(playlistId, songId)
+        }
+    }
 }

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope // Import lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
@@ -20,6 +21,7 @@ import com.example.tunespipe.ui.your_library.YourLibraryViewModel
 import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.launch // Import launch
 
 @UnstableApi
 class SongActionsDialogFragment : BottomSheetDialogFragment() {
@@ -62,8 +64,8 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             dismiss()
             val strategy = if (parentFragment is PlaylistDetailFragment) {
                 val playlistFragment = parentFragment as PlaylistDetailFragment
-                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value
-                AutoplayStrategy.ShufflePlaylist(playlistWithSongs!!)
+                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value!!
+                AutoplayStrategy.ShufflePlaylist(playlistWithSongs)
             } else {
                 AutoplayStrategy.RepeatOne
             }
@@ -72,18 +74,38 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             binding.playlistButtonsContainer.removeAllViews()
-            playlists.forEach { playlist ->
-                addPlaylistButton(playlist)
+            // --- START OF MODIFIED LOGIC ---
+            // Use lifecycleScope to call suspend functions
+            lifecycleScope.launch {
+                playlists.forEach { playlist ->
+                    // Check if the song is already in this playlist
+                    val songIsInPlaylist = yourLibraryViewModel.isSongInPlaylist(song.trackId, playlist.id)
+                    // Create the appropriate button
+                    addPlaylistButton(playlist, songIsInPlaylist)
+                }
             }
         }
     }
 
-    private fun addPlaylistButton(playlist: Playlist) {
+    private fun addPlaylistButton(playlist: Playlist, songIsInPlaylist: Boolean) {
         val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-            text = "Add to ${playlist.name}"
-            setOnClickListener {
-                yourLibraryViewModel.addSongToPlaylist(song, playlist.id)
-                dismiss()
+            if (songIsInPlaylist) {
+                text = "Remove from ${playlist.name}"
+                // Set icon for remove action
+                setIconResource(R.drawable.ic_remove_24)
+                setOnClickListener {
+                    yourLibraryViewModel.removeSongFromPlaylist(song.trackId, playlist.id)
+                    // Refresh the dialog or dismiss it
+                    dismiss()
+                }
+            } else {
+                text = "Add to ${playlist.name}"
+                // Set icon for add action
+                setIconResource(R.drawable.ic_add_24)
+                setOnClickListener {
+                    yourLibraryViewModel.addSongToPlaylist(song, playlist.id)
+                    dismiss()
+                }
             }
         }
         binding.playlistButtonsContainer.addView(button)
