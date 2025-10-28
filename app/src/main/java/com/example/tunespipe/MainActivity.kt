@@ -37,7 +37,10 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_activity_main)
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_search, R.id.navigation_your_library, R.id.navigation_donate
+                R.id.navigation_search,
+                R.id.navigation_queue,
+                R.id.navigation_your_library,
+                R.id.navigation_donate
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)

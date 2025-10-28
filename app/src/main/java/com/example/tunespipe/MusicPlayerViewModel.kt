@@ -20,10 +20,11 @@ class MusicPlayerViewModel : ViewModel() {
     private val _nowPlaying = MutableStateFlow<Song?>(null)
     val nowPlaying = _nowPlaying.asStateFlow()
 
-    // --- START OF FIX: Add isLoading state ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
-    // --- END OF FIX ---
+
+    private val _strategy = MutableStateFlow<AutoplayStrategy?>(null)
+    val strategy = _strategy.asStateFlow()
 
     fun initialize(context: Context) {
         if (browser == null) {
@@ -40,10 +41,9 @@ class MusicPlayerViewModel : ViewModel() {
     fun playSong(song: Song, strategy: AutoplayStrategy) {
         if (browser == null) return
 
-        // --- START OF FIX: Set loading state before sending command ---
         _isLoading.value = true
-        _nowPlaying.value = song // Optimistically set the song that is starting to play
-        // --- END OF FIX ---
+        _nowPlaying.value = song
+        _strategy.value = strategy
 
         val commandBundle = Bundle().apply {
             putParcelable("SONG_TO_PLAY", song)

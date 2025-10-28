@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">TunesPipe</string>
     <string name="title_search">Search</string>
+    <string name="title_queue">Queue</string>
     <string name="title_your_library">Your Library</string>
     <string name="title_donate">Donate</string>
 </resources>

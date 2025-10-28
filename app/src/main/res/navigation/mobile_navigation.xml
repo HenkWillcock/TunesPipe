@@ -11,6 +11,14 @@
         android:label="@string/title_search"
         tools:layout="@layout/fragment_search" />
 
+    <!-- START OF FIX: Add the new QueueFragment destination here -->
+    <fragment
+        android:id="@+id/navigation_queue"
+        android:name="com.example.tunespipe.ui.queue.QueueFragment"
+        android:label="@string/title_queue"
+        tools:layout="@layout/fragment_queue" />
+    <!-- END OF FIX -->
+
     <fragment
         android:id="@+id/navigation_your_library"
         android:name="com.example.tunespipe.ui.your_library.YourLibraryFragment"

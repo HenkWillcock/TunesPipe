@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- TODO better icons -->
 
     <item
         android:id="@+id/navigation_search"
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/title_search" />
+
+    <!-- This is the new item for the Queue tab -->
+    <item
+        android:id="@+id/navigation_queue"
+        android:icon="@drawable/ic_queue_music_24"
+        android:title="@string/title_queue" />
 
     <item
         android:id="@+id/navigation_your_library"
