@@ -68,4 +68,5 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx) // For coroutine support
     ksp(libs.androidx.room.compiler) // Annotation processor
+    implementation(libs.kotlinx.coroutines.guava)
 }

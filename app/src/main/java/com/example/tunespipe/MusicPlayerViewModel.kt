@@ -4,14 +4,21 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
+import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
 
 class MusicPlayerViewModel : ViewModel() {
 
@@ -32,12 +39,14 @@ class MusicPlayerViewModel : ViewModel() {
     fun initialize(context: Context) {
         if (browser == null) {
             val sessionToken = SessionToken(context, ComponentName(context, MusicPlayerService::class.java))
-            val browserFuture = MediaBrowser.Builder(context, sessionToken).buildAsync()
-            browserFuture.addListener({
-                browser = browserFuture.get()
-                // Add listener for state changes
-                browser?.addListener(PlayerListener())
-            }, MoreExecutors.directExecutor())
+            viewModelScope.launch {
+                val browserFuture = MediaBrowser.Builder(context, sessionToken)
+                    .setListener(BrowserListener())
+                    .buildAsync()
+                browser = browserFuture.await()
+                browser?.addListener(PlayerStateListener())
+                _nowPlaying.value = browser?.currentMediaItem?.mediaMetadata?.extras?.getParcelable("SONG_METADATA")
+            }
         }
     }
 
@@ -61,10 +70,26 @@ class MusicPlayerViewModel : ViewModel() {
 
     fun playNext(song: Song) {
         _queue.value = listOf(song) + _queue.value
+        sendQueueUpdateToService()
     }
 
     fun addSongToQueue(song: Song) {
-        _queue.value += song
+        _queue.value = _queue.value + song
+        sendQueueUpdateToService()
+    }
+
+    private fun sendQueueUpdateToService() {
+        if (browser == null) return
+
+        val queueToSend = ArrayList(_queue.value)
+
+        val commandBundle = Bundle().apply {
+            putParcelableArrayList("QUEUE_SONGS", queueToSend)
+        }
+        browser?.sendCustomCommand(
+            SessionCommand("UPDATE_QUEUE", Bundle.EMPTY),
+            commandBundle
+        )
     }
 
     override fun onCleared() {
@@ -72,22 +97,38 @@ class MusicPlayerViewModel : ViewModel() {
         super.onCleared()
     }
 
-    private inner class PlayerListener : Player.Listener {
+    private inner class BrowserListener : MediaBrowser.Listener {
+        override fun onCustomCommand(
+            controller: MediaController,
+            command: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+            if (command.customAction == "PLAY_NEXT_IN_QUEUE") {
+                val currentQueue = _queue.value
+                if (currentQueue.isNotEmpty()) {
+                    val nextSong = currentQueue.first()
+                    playSong(nextSong, _strategy.value ?: AutoplayStrategy.RepeatOne)
+                    _queue.value = currentQueue.drop(1)
+                }
+            }
+            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
+    }
+
+    private inner class PlayerStateListener : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            // When the media item changes in the service, update our state
-            val song = mediaItem?.mediaMetadata?.extras?.getParcelable<Song>("SONG_METADATA")
-            _nowPlaying.value = song
-            // --- START OF FIX: When a new item starts playing, we are no longer loading ---
             _isLoading.value = false
-            // --- END OF FIX ---
+            _nowPlaying.value = mediaItem?.mediaMetadata?.extras?.getParcelable("SONG_METADATA")
         }
 
-        // --- START OF FIX: Also consider loading finished when playback starts ---
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             if (isPlaying) {
                 _isLoading.value = false
             }
         }
-        // --- END OF FIX ---
+
+        override fun onPlayerError(error: PlaybackException) {
+            _isLoading.value = false
+        }
     }
 }
