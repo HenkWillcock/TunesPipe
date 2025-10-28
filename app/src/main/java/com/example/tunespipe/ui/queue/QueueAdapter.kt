@@ -7,8 +7,11 @@ import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
 import com.example.tunespipe.R
 import com.example.tunespipe.databinding.ItemQueueAutoplayBinding
-import com.example.tunespipe.databinding.ItemQueueSongBinding
 import com.example.tunespipe.databinding.ItemQueueNowPlayingBinding
+// --- START OF CHANGE ---
+// We will now use the same binding as the search results
+import com.example.tunespipe.databinding.ItemSongResultBinding
+// --- END OF CHANGE ---
 import java.lang.IllegalArgumentException
 
 class QueueAdapter(
@@ -24,10 +27,11 @@ class QueueAdapter(
     inner class NowPlayingViewHolder(val binding: ItemQueueNowPlayingBinding) :
         RecyclerView.ViewHolder(binding.root)
 
-    inner class QueuedSongViewHolder(val binding: ItemQueueSongBinding) :
+    // --- START OF CHANGE: ViewHolder now uses ItemSongResultBinding ---
+    inner class QueuedSongViewHolder(val binding: ItemSongResultBinding) :
         RecyclerView.ViewHolder(binding.root)
+    // --- END OF CHANGE ---
 
-    // --- ViewHolder for the "Autoplay Strategy" item ---
     inner class AutoplayViewHolder(val binding: ItemQueueAutoplayBinding) :
         RecyclerView.ViewHolder(binding.root)
 
@@ -46,10 +50,12 @@ class QueueAdapter(
                 val binding = ItemQueueNowPlayingBinding.inflate(inflater, parent, false)
                 NowPlayingViewHolder(binding)
             }
+            // --- START OF CHANGE: Inflate the correct layout for a queued song ---
             TYPE_QUEUED_SONG -> {
-                val binding = ItemQueueSongBinding.inflate(inflater, parent, false)
+                val binding = ItemSongResultBinding.inflate(inflater, parent, false)
                 QueuedSongViewHolder(binding)
             }
+            // --- END OF CHANGE ---
             TYPE_AUTOPLAY -> {
                 val binding = ItemQueueAutoplayBinding.inflate(inflater, parent, false)
                 AutoplayViewHolder(binding)
@@ -72,11 +78,20 @@ class QueueAdapter(
                     .placeholder(R.drawable.ic_launcher_foreground)
                     .into(nowPlayingHolder.binding.artworkImage)
             }
+            // --- START OF CHANGE: Bind data to the ItemSongResultBinding ---
             is QueueItem.QueuedSong -> {
                 val queuedHolder = holder as QueuedSongViewHolder
                 val song = currentItem.song
-                queuedHolder.binding.songInfoText.text = "${song.trackName}\n${song.artistName}"
+                queuedHolder.binding.trackName.text = song.trackName
+                queuedHolder.binding.artistName.text = song.artistName
+                Glide.with(holder.itemView.context)
+                    .load(song.artworkUrl)
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .into(queuedHolder.binding.artworkImage)
+
+                // You can add click listeners or other logic here later
             }
+            // --- END OF CHANGE ---
             is QueueItem.Autoplay -> {
                 val autoplayHolder = holder as AutoplayViewHolder
                 val strategy = currentItem.strategy
