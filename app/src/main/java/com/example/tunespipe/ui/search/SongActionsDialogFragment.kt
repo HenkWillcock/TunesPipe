@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels // Use activityViewModels to share with MainActivity
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
-import com.example.tunespipe.MusicPlayerSingleton
+import com.example.tunespipe.MusicPlayerViewModel // Import the new ViewModel
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.database.AppDatabase
@@ -20,7 +20,6 @@ import com.example.tunespipe.ui.your_library.YourLibraryViewModel
 import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
-import kotlinx.coroutines.launch
 
 @UnstableApi
 class SongActionsDialogFragment : BottomSheetDialogFragment() {
@@ -32,11 +31,15 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         requireArguments().getParcelable(ARG_SONG)!!
     }
 
+    // This ViewModel is for database operations
     private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
         YourLibraryViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao()
         )
     }
+
+    // Get the shared player ViewModel from the Activity
+    private val playerViewModel: MusicPlayerViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -59,21 +62,15 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
         binding.playNowButton.setOnClickListener {
             dismiss()
-            // --- START OF REFACTORED LOGIC ---
-            parentFragment?.lifecycleScope?.launch {
-                // Determine which strategy to use based on the parent fragment
-                val strategy = if (parentFragment is PlaylistDetailFragment) {
-                    // We are in a playlist, so create the SHUFFLE strategy with the song list
-                    val playlistFragment = parentFragment as PlaylistDetailFragment
-                    val playlistSongs = playlistFragment.viewModel.playlistWithSongs.value?.songs ?: emptyList()
-                    AutoplayStrategy.ShufflePlaylist(playlistSongs)
-                } else {
-                    // We are likely in search, so use the simple REPEAT_ONE strategy
-                    AutoplayStrategy.RepeatOne
-                }
-                MusicPlayerSingleton.playSong(requireContext(), song, strategy)
+            val strategy = if (parentFragment is PlaylistDetailFragment) {
+                val playlistFragment = parentFragment as PlaylistDetailFragment
+                val playlistSongs = playlistFragment.viewModel.playlistWithSongs.value?.songs ?: emptyList()
+                AutoplayStrategy.ShufflePlaylist(playlistSongs)
+            } else {
+                AutoplayStrategy.RepeatOne
             }
-            // --- END OF REFACTORED LOGIC ---
+            // Use the ViewModel to play the song
+            playerViewModel.playSong(song, strategy)
         }
 
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->

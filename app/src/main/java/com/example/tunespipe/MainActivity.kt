@@ -3,8 +3,8 @@ package com.example.tunespipe
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Bundle
+import androidx.activity.viewModels // Import the correct viewModels delegate
 import androidx.appcompat.app.AppCompatActivity
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -22,6 +22,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
+
+    // Get a reference to the new ViewModel
+    private val playerViewModel: MusicPlayerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +51,9 @@ class MainActivity : AppCompatActivity() {
 
         NewPipe.init(DownloaderImpl(HttpClient.instance))
         setupNotificationManager()
-        MusicPlayerSingleton.initialize(this.applicationContext)
+
+        // Initialize the ViewModel, which will connect to the service.
+        playerViewModel.initialize(this)
     }
 
     override fun onSupportNavigateUp(): Boolean {

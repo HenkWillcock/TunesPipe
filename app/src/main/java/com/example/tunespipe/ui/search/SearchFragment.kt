@@ -5,11 +5,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SearchView
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tunespipe.MusicPlayerViewModel
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
@@ -21,10 +23,9 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    // --- START OF CHANGE ---
-    // Remove the unnecessary class property for the adapter.
-    // var songAdapter: SongRecyclerViewAdapter? = null
-    // --- END OF CHANGE ---
+
+    // Get a reference to the shared ViewModel from the activity
+    private val playerViewModel: MusicPlayerViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,10 +64,8 @@ class SearchFragment : Fragment() {
 
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
-        // --- START OF CHANGE ---
-        // Declare the adapter as a local variable. It does not need to be a class property.
-        val songAdapter = SongRecyclerViewAdapter(songs) { clickedSong ->
-            // --- END OF CHANGE ---
+        // Pass the playerViewModel into the adapter's constructor
+        val songAdapter = SongRecyclerViewAdapter(songs, playerViewModel) { clickedSong ->
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)

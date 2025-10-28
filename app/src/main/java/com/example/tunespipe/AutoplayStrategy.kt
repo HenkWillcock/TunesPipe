@@ -1,18 +1,23 @@
 package com.example.tunespipe
 
-/**
- * Defines the behavior for what should happen when a song finishes playing.
- * Using a sealed class allows states to hold their own specific data.
- */
-sealed class AutoplayStrategy {
-    /**
-     * Repeats the same song indefinitely. This state has no extra data.
-     */
-    data object RepeatOne : AutoplayStrategy()
+// --- START OF FIX: Import Parcelable and Parcelize ---
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+// --- END OF FIX ---
 
-    /**
-     * Picks another random song from the given playlist. This state holds the playlist.
-     * @param playlist The list of songs to shuffle through.
-     */
-    data class ShufflePlaylist(val playlist: List<Song>) : AutoplayStrategy()
+
+// --- START OF FIX: Add @Parcelize annotation ---
+@Parcelize
+sealed interface AutoplayStrategy : Parcelable {
+// --- END OF FIX ---
+
+    // --- START OF FIX: Add @Parcelize annotation ---
+    @Parcelize
+    data object RepeatOne : AutoplayStrategy
+    // --- END OF FIX ---
+
+    // --- START OF FIX: Add @Parcelize annotation ---
+    @Parcelize
+    data class ShufflePlaylist(val playlist: List<Song>) : AutoplayStrategy
+    // --- END OF FIX ---
 }

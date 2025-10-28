@@ -10,13 +10,15 @@ import android.view.ViewGroup
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tunespipe.R // Make sure R is imported
+import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.R
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentPlaylistDetailBinding
 import com.example.tunespipe.ui.SongRecyclerViewAdapter
@@ -38,6 +40,9 @@ class PlaylistDetailFragment : Fragment() {
         )
     }
 
+    // Get a reference to the shared ViewModel from the activity
+    private val playerViewModel: MusicPlayerViewModel by activityViewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -49,9 +54,10 @@ class PlaylistDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupMenu() // Call the new menu setup method
+        setupMenu()
 
-        val songAdapter = SongRecyclerViewAdapter(emptyList()) { clickedSong ->
+        // Pass the playerViewModel into the adapter's constructor
+        val songAdapter = SongRecyclerViewAdapter(emptyList(), playerViewModel) { clickedSong ->
             val songActionsDialog = SongActionsDialogFragment.newInstance(clickedSong)
             songActionsDialog.show(childFragmentManager, "SongActionsDialog")
         }
@@ -68,17 +74,14 @@ class PlaylistDetailFragment : Fragment() {
         }
     }
 
-    // --- START OF NEW CODE ---
     private fun setupMenu() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                // Add menu items here
                 menuInflater.inflate(R.menu.playlist_detail_menu, menu)
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                // Handle the menu selection
                 return when (menuItem.itemId) {
                     R.id.action_delete_playlist -> {
                         showConfirmDeleteDialog()
@@ -99,13 +102,11 @@ class PlaylistDetailFragment : Fragment() {
             }
             .setPositiveButton("Confirm") { dialog, _ ->
                 viewModel.deletePlaylist()
-                // Navigate back to the library screen after deletion
                 findNavController().popBackStack()
                 dialog.dismiss()
             }
             .show()
     }
-    // --- END OF NEW CODE ---
 
     override fun onDestroyView() {
         super.onDestroyView()

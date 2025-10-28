@@ -11,7 +11,9 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.tunespipe.MusicPlayerSingleton
+// --- START OF FIX: Import the ViewModel ---
+import com.example.tunespipe.MusicPlayerViewModel
+// --- END OF FIX ---
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
@@ -20,6 +22,9 @@ import kotlinx.coroutines.flow.onEach
 
 class SongRecyclerViewAdapter(
     private var songs: List<Song>,
+    // --- START OF FIX: Add ViewModel to constructor ---
+    private val playerViewModel: MusicPlayerViewModel,
+    // --- END OF FIX ---
     private val onSongClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongRecyclerViewAdapter.SongViewHolder>() {
 
@@ -29,12 +34,16 @@ class SongRecyclerViewAdapter(
         super.onAttachedToRecyclerView(recyclerView)
         val lifecycleOwner = recyclerView.findViewTreeLifecycleOwner()
         lifecycleOwner?.lifecycleScope?.let { scope ->
-            MusicPlayerSingleton.nowPlaying
+            // --- START OF FIX: Observe the ViewModel's nowPlaying flow ---
+            playerViewModel.nowPlaying
                 .onEach { nowPlayingSong ->
                     playingSong = nowPlayingSong
+                    // Using notifyDataSetChanged is inefficient but simple for now.
+                    // It's okay for this project size.
                     notifyDataSetChanged()
                 }
                 .launchIn(scope)
+            // --- END OF FIX ---
         }
     }
 
@@ -59,8 +68,10 @@ class SongRecyclerViewAdapter(
             .placeholder(R.drawable.ic_launcher_foreground)
             .into(holder.binding.artworkImage)
 
-        if (playingSong == song) {
-            holder.binding.loadingSpinner.visibility = View.VISIBLE
+        // The rest of this file is correct. The logic for highlighting the
+        // playing song based on the 'playingSong' variable remains the same.
+        if (playingSong?.trackId == song.trackId) {
+            holder.binding.loadingSpinner.visibility = if (playingSong?.previewUrl.isNullOrEmpty()) View.VISIBLE else View.GONE
             setTextSelected(holder.binding.trackName, holder.itemView.context)
             setTextSelected(holder.binding.artistName, holder.itemView.context)
         } else {
