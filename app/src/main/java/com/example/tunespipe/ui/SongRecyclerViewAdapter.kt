@@ -11,9 +11,7 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-// --- START OF FIX: Import the ViewModel ---
 import com.example.tunespipe.MusicPlayerViewModel
-// --- END OF FIX ---
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
@@ -22,24 +20,30 @@ import kotlinx.coroutines.flow.onEach
 
 class SongRecyclerViewAdapter(
     private var songs: List<Song>,
-    // --- START OF FIX: Add ViewModel to constructor ---
     private val playerViewModel: MusicPlayerViewModel,
-    // --- END OF FIX ---
     private val onSongClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongRecyclerViewAdapter.SongViewHolder>() {
 
     private var playingSong: Song? = null
+    // --- START OF FIX: Add a variable to track loading state ---
+    private var isLoading: Boolean = false
+    // --- END OF FIX ---
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         val lifecycleOwner = recyclerView.findViewTreeLifecycleOwner()
         lifecycleOwner?.lifecycleScope?.let { scope ->
-            // --- START OF FIX: Observe the ViewModel's nowPlaying flow ---
             playerViewModel.nowPlaying
                 .onEach { nowPlayingSong ->
                     playingSong = nowPlayingSong
-                    // Using notifyDataSetChanged is inefficient but simple for now.
-                    // It's okay for this project size.
+                    notifyDataSetChanged()
+                }
+                .launchIn(scope)
+
+            // --- START OF FIX: Observe the isLoading state from the ViewModel ---
+            playerViewModel.isLoading
+                .onEach { loading ->
+                    isLoading = loading
                     notifyDataSetChanged()
                 }
                 .launchIn(scope)
@@ -68,14 +72,21 @@ class SongRecyclerViewAdapter(
             .placeholder(R.drawable.ic_launcher_foreground)
             .into(holder.binding.artworkImage)
 
-        // The rest of this file is correct. The logic for highlighting the
-        // playing song based on the 'playingSong' variable remains the same.
-        if (playingSong?.trackId == song.trackId) {
-            holder.binding.loadingSpinner.visibility = if (playingSong?.previewUrl.isNullOrEmpty()) View.VISIBLE else View.GONE
+        val isCurrentlyPlayingOrLoadingSong = playingSong?.trackId == song.trackId
+
+        // --- START OF FIX: Update spinner visibility logic ---
+        // Show the spinner ONLY if this is the currently "playing" song AND we are in a loading state.
+        if (isCurrentlyPlayingOrLoadingSong && isLoading) {
+            holder.binding.loadingSpinner.visibility = View.VISIBLE
+        } else {
+            holder.binding.loadingSpinner.visibility = View.GONE
+        }
+        // --- END OF FIX ---
+
+        if (isCurrentlyPlayingOrLoadingSong) {
             setTextSelected(holder.binding.trackName, holder.itemView.context)
             setTextSelected(holder.binding.artistName, holder.itemView.context)
         } else {
-            holder.binding.loadingSpinner.visibility = View.GONE
             setTextNotSelected(holder.binding.trackName, holder.itemView.context)
             setTextNotSelected(holder.binding.artistName, holder.itemView.context)
         }
