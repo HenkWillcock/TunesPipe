@@ -1,62 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/queue_recycler_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
-    tools:context=".ui.queue.QueueFragment">
-
-    <TextView
-        android:id="@+id/queue_header_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Now Playing"
-        android:textAppearance="?attr/textAppearanceHeadline5"
-        android:layout_marginBottom="24dp"
-        android:visibility="gone"
-        tools:visibility="visible"/>
-
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/artwork_image"
-        android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:scaleType="centerCrop"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
-        tools:src="@tools:sample/backgrounds/scenic" />
-
-    <TextView
-        android:id="@+id/song_title_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textAppearance="?attr/textAppearanceHeadline6"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:gravity="center"
-        tools:text="A Very Long Song Title That Might Wrap to Two Lines" />
-
-    <TextView
-        android:id="@+id/artist_name_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textAppearance="?attr/textAppearanceSubtitle1"
-        android:maxLines="1"
-        android:ellipsize="end"
-        tools:text="The Artist Name" />
-
-    <TextView
-        android:id="@+id/strategy_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:drawablePadding="8dp"
-        android:gravity="center"
-        android:textAppearance="?attr/textAppearanceBody1"
-        app:drawableStartCompat="@drawable/ic_repeat_one_24"
-        tools:text="Shuffle Playlist" />
-
-</LinearLayout>
+    tools:context=".ui.queue.QueueFragment"
+    tools:listitem="@layout/item_queue_now_playing" />

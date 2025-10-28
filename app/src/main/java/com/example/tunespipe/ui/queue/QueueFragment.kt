@@ -7,10 +7,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
-import com.example.tunespipe.AutoplayStrategy
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
-import com.example.tunespipe.R
 import com.example.tunespipe.databinding.FragmentQueueBinding
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -21,6 +19,7 @@ class QueueFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val playerViewModel: MusicPlayerViewModel by activityViewModels()
+    private lateinit var queueAdapter: QueueAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,42 +33,37 @@ class QueueFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Setup the RecyclerView and Adapter
+        queueAdapter = QueueAdapter(emptyList())
+        binding.queueRecyclerView.apply {
+            adapter = queueAdapter
+            layoutManager = LinearLayoutManager(context)
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
+            // Combine the nowPlaying and strategy flows to update the UI
             playerViewModel.nowPlaying.combine(playerViewModel.strategy) { song, strategy ->
                 Pair(song, strategy)
             }.collect { (song, strategy) ->
-                if (song != null) {
-                    binding.queueHeaderText.visibility = View.VISIBLE
-                    binding.songTitleText.text = song.trackName
-                    binding.artistNameText.text = song.artistName
-                    Glide.with(this@QueueFragment)
-                        .load(song.artworkUrl)
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .into(binding.artworkImage)
 
-                    binding.strategyText.visibility = View.VISIBLE
-                    when (strategy) {
-                        is AutoplayStrategy.RepeatOne -> {
-                            binding.strategyText.text = "Repeat One"
-                            binding.strategyText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_repeat_one_24, 0, 0, 0)
-                        }
-                        is AutoplayStrategy.ShufflePlaylist -> {
-                            val playlistName = strategy.playlistWithSongs.playlist.name
-                            binding.strategyText.text = "Shuffle Playlist: $playlistName"
-                            binding.strategyText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_shuffle_24, 0, 0, 0)
-                        }
-                        else -> {
-                            binding.strategyText.visibility = View.GONE
-                        }
-                    }
-                } else {
-                    binding.queueHeaderText.visibility = View.GONE
-                    binding.songTitleText.text = "Nothing is playing."
-                    binding.artistNameText.text = ""
-                    binding.strategyText.text = ""
-                    binding.strategyText.visibility = View.GONE
-                    binding.artworkImage.setImageResource(R.drawable.ic_launcher_foreground)
+                val queueItems = mutableListOf<QueueItem>()
+
+                // If there's a song playing, add it as the first item
+                if (song != null) {
+                    queueItems.add(QueueItem.NowPlaying(song))
                 }
+
+                // If there's a strategy, add it as the last item
+                if (strategy != null) {
+                    queueItems.add(QueueItem.Autoplay(strategy))
+                }
+
+                if (queueItems.isEmpty()) {
+                    // Handle the empty case if you want, e.g., show a message
+                }
+
+                // Update the adapter with the new list
+                queueAdapter.updateItems(queueItems)
             }
         }
     }
