@@ -72,6 +72,11 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             playerViewModel.playSong(song, strategy)
         }
 
+        binding.addToQueueButton.setOnClickListener {
+            playerViewModel.addSongToQueue(song)
+            dismiss()
+        }
+
         yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             binding.playlistButtonsContainer.removeAllViews()
             // --- START OF MODIFIED LOGIC ---

@@ -50,6 +50,15 @@
         android:layout_height="wrap_content"
         android:text="Play Song Now" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/add_to_queue_button"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Add to Queue"
+        app:icon="@drawable/ic_queue_music_24" />
+
     <LinearLayout
         android:id="@+id/playlist_buttons_container"
         android:layout_width="match_parent"

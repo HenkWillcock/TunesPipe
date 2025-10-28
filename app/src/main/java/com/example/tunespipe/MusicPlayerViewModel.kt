@@ -26,6 +26,9 @@ class MusicPlayerViewModel : ViewModel() {
     private val _strategy = MutableStateFlow<AutoplayStrategy?>(null)
     val strategy = _strategy.asStateFlow()
 
+    private val _queue = MutableStateFlow<List<Song>>(emptyList())
+    val queue = _queue.asStateFlow()
+
     fun initialize(context: Context) {
         if (browser == null) {
             val sessionToken = SessionToken(context, ComponentName(context, MusicPlayerService::class.java))
@@ -53,6 +56,10 @@ class MusicPlayerViewModel : ViewModel() {
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
             commandBundle,
         )
+    }
+
+    fun addSongToQueue(song: Song) {
+        _queue.value += song
     }
 
     override fun onCleared() {

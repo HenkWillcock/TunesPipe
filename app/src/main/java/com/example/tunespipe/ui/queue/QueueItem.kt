@@ -9,5 +9,6 @@ import com.example.tunespipe.Song
  */
 sealed interface QueueItem {
     data class NowPlaying(val song: Song) : QueueItem
+    data class QueuedSong(val song: Song) : QueueItem
     data class Autoplay(val strategy: AutoplayStrategy) : QueueItem
 }

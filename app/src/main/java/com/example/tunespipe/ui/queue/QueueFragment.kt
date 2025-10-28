@@ -33,7 +33,6 @@ class QueueFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup the RecyclerView and Adapter
         queueAdapter = QueueAdapter(emptyList())
         binding.queueRecyclerView.apply {
             adapter = queueAdapter
@@ -41,28 +40,34 @@ class QueueFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Combine the nowPlaying and strategy flows to update the UI
-            playerViewModel.nowPlaying.combine(playerViewModel.strategy) { song, strategy ->
-                Pair(song, strategy)
-            }.collect { (song, strategy) ->
+            // Combine all three flows to build the complete UI list
+            playerViewModel.nowPlaying.combine(playerViewModel.queue) { song, queue ->
+                Pair(song, queue)
+            }.combine(playerViewModel.strategy) { (song, queue), strategy ->
+                Triple(song, queue, strategy)
+            }.collect { (song, queue, strategy) ->
 
                 val queueItems = mutableListOf<QueueItem>()
 
-                // If there's a song playing, add it as the first item
+                // 1. Add "Now Playing" if it exists
                 if (song != null) {
                     queueItems.add(QueueItem.NowPlaying(song))
                 }
 
-                // If there's a strategy, add it as the last item
+                // 2. Add all the songs from the queue
+                queue.forEach { queuedSong ->
+                    queueItems.add(QueueItem.QueuedSong(queuedSong))
+                }
+
+                // 3. Add the autoplay strategy if it exists
                 if (strategy != null) {
                     queueItems.add(QueueItem.Autoplay(strategy))
                 }
 
                 if (queueItems.isEmpty()) {
-                    // Handle the empty case if you want, e.g., show a message
+                    // Handle empty case, maybe show a "Queue is empty" text
                 }
 
-                // Update the adapter with the new list
                 queueAdapter.updateItems(queueItems)
             }
         }

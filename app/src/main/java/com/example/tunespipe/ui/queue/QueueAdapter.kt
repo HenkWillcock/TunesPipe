@@ -7,6 +7,7 @@ import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
 import com.example.tunespipe.R
 import com.example.tunespipe.databinding.ItemQueueAutoplayBinding
+import com.example.tunespipe.databinding.ItemQueueSongBinding
 import com.example.tunespipe.databinding.ItemQueueNowPlayingBinding
 import java.lang.IllegalArgumentException
 
@@ -14,14 +15,16 @@ class QueueAdapter(
     private var items: List<QueueItem>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    // Define integer constants for each view type
     companion object {
         private const val TYPE_NOW_PLAYING = 0
-        private const val TYPE_AUTOPLAY = 1
+        private const val TYPE_QUEUED_SONG = 1
+        private const val TYPE_AUTOPLAY = 2
     }
 
-    // --- ViewHolder for the "Now Playing" item ---
     inner class NowPlayingViewHolder(val binding: ItemQueueNowPlayingBinding) :
+        RecyclerView.ViewHolder(binding.root)
+
+    inner class QueuedSongViewHolder(val binding: ItemQueueSongBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     // --- ViewHolder for the "Autoplay Strategy" item ---
@@ -31,6 +34,7 @@ class QueueAdapter(
     override fun getItemViewType(position: Int): Int {
         return when (items[position]) {
             is QueueItem.NowPlaying -> TYPE_NOW_PLAYING
+            is QueueItem.QueuedSong -> TYPE_QUEUED_SONG
             is QueueItem.Autoplay -> TYPE_AUTOPLAY
         }
     }
@@ -41,6 +45,10 @@ class QueueAdapter(
             TYPE_NOW_PLAYING -> {
                 val binding = ItemQueueNowPlayingBinding.inflate(inflater, parent, false)
                 NowPlayingViewHolder(binding)
+            }
+            TYPE_QUEUED_SONG -> {
+                val binding = ItemQueueSongBinding.inflate(inflater, parent, false)
+                QueuedSongViewHolder(binding)
             }
             TYPE_AUTOPLAY -> {
                 val binding = ItemQueueAutoplayBinding.inflate(inflater, parent, false)
@@ -63,6 +71,11 @@ class QueueAdapter(
                     .load(song.artworkUrl)
                     .placeholder(R.drawable.ic_launcher_foreground)
                     .into(nowPlayingHolder.binding.artworkImage)
+            }
+            is QueueItem.QueuedSong -> {
+                val queuedHolder = holder as QueuedSongViewHolder
+                val song = currentItem.song
+                queuedHolder.binding.songInfoText.text = "${song.trackName}\n${song.artistName}"
             }
             is QueueItem.Autoplay -> {
                 val autoplayHolder = holder as AutoplayViewHolder
