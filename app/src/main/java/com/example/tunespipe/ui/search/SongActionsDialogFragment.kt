@@ -98,7 +98,11 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun addPlaylistButton(playlist: Playlist, songIsInPlaylist: Boolean) {
-        val button = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        val button = MaterialButton(
+            requireContext(),
+            null,
+            com.google.android.material.R.attr.materialButtonOutlinedStyle,
+        ).apply {
             if (songIsInPlaylist) {
                 text = "Remove from ${playlist.name}"
                 // Set icon for remove action
