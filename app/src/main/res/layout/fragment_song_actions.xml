@@ -51,6 +51,14 @@
         android:text="Play Song Now" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/play_next_button"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Play Next" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/add_to_queue_button"
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="match_parent"

@@ -72,6 +72,11 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             playerViewModel.playSong(song, strategy)
         }
 
+        binding.playNextButton.setOnClickListener {
+            playerViewModel.playNext(song)
+            dismiss()
+        }
+
         binding.addToQueueButton.setOnClickListener {
             playerViewModel.addSongToQueue(song)
             dismiss()

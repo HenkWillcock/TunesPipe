@@ -58,6 +58,10 @@ class MusicPlayerViewModel : ViewModel() {
         )
     }
 
+    fun playNext(song: Song) {
+        _queue.value = listOf(song) + _queue.value
+    }
+
     fun addSongToQueue(song: Song) {
         _queue.value += song
     }
