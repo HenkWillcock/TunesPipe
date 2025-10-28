@@ -2,7 +2,6 @@ package com.example.tunespipe
 
 import android.os.Bundle
 import android.util.Log
-
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -36,6 +35,9 @@ class MusicPlayerService : MediaSessionService() {
 
     private var autoplayStrategy: AutoplayStrategy = AutoplayStrategy.RepeatOne
     private var currentSong: Song? = null
+    // --- START OF CHANGE: Add a list to hold the incoming queue ---
+    private var songQueue: MutableList<Song> = mutableListOf()
+    // --- END OF CHANGE ---
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
@@ -63,8 +65,14 @@ class MusicPlayerService : MediaSessionService() {
             if (customCommand.customAction == "PLAY_SONG") {
                 val song = args.getParcelable<Song>("SONG_TO_PLAY")
                 val strategy = args.getParcelable<AutoplayStrategy>("AUTOPLAY_STRATEGY")
+                // --- START OF CHANGE: Receive the queue from the ViewModel ---
+                val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
+                // --- END OF CHANGE ---
+
                 if (song != null && strategy != null) {
-                    serviceScope.launch { playSongInternal(song, strategy) }
+                    // --- START OF CHANGE: Pass the queue to the internal play function ---
+                    serviceScope.launch { playSongInternal(song, strategy, queueSongs ?: emptyList()) }
+                    // --- END OF CHANGE ---
                 }
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
@@ -74,7 +82,19 @@ class MusicPlayerService : MediaSessionService() {
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) {
+                // --- START OF NEW QUEUE LOGIC ---
+                // 1. Prioritize the user's queue
+                if (songQueue.isNotEmpty()) {
+                    val nextSong = songQueue.removeAt(0)
+                    // When playing from the queue, we keep the original autoplay strategy
+                    // and pass the now-shortened queue for the *next* song.
+                    serviceScope.launch { playSongInternal(nextSong, autoplayStrategy, songQueue) }
+                    return // IMPORTANT: Stop here and don't proceed to autoplay logic
+                }
+
+                // 2. If the queue is empty, fall back to the current autoplay strategy
                 when (val strategy = autoplayStrategy) {
+                    // --- END OF NEW QUEUE LOGIC ---
                     is AutoplayStrategy.RepeatOne -> {
                         player.seekTo(0)
                         player.playWhenReady = true
@@ -83,7 +103,8 @@ class MusicPlayerService : MediaSessionService() {
                         val playlistSongs = strategy.playlistWithSongs.songs
                         val nextSong = playlistSongs.filter { it != currentSong }.randomOrNull()
                         if (nextSong != null) {
-                            serviceScope.launch { playSongInternal(nextSong, strategy) }
+                            // When shuffling, we start with a fresh empty queue
+                            serviceScope.launch { playSongInternal(nextSong, strategy, emptyList()) }
                         }
                     }
                 }
@@ -103,9 +124,15 @@ class MusicPlayerService : MediaSessionService() {
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
     }
 
-    private suspend fun playSongInternal(song: Song, strategy: AutoplayStrategy) {
+    // --- START OF CHANGE: The function now accepts a queue ---
+    private suspend fun playSongInternal(song: Song, strategy: AutoplayStrategy, queue: List<Song>) {
+        // --- END OF CHANGE ---
         this.currentSong = song
         this.autoplayStrategy = strategy
+        // --- START OF CHANGE: Store the queue locally ---
+        this.songQueue = queue.toMutableList()
+        // --- END OF CHANGE ---
+
 
         val streamUrl = withContext(Dispatchers.IO) { findBestAudioStreamUrl(song) }
 

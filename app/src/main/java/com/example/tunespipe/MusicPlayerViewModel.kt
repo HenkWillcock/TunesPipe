@@ -51,6 +51,7 @@ class MusicPlayerViewModel : ViewModel() {
         val commandBundle = Bundle().apply {
             putParcelable("SONG_TO_PLAY", song)
             putParcelable("AUTOPLAY_STRATEGY", strategy)
+            putParcelableArrayList("QUEUE_SONGS", ArrayList(_queue.value))
         }
         browser?.sendCustomCommand(
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
