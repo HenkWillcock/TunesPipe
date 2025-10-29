@@ -60,10 +60,7 @@ class MusicPlayerViewModel : ViewModel() {
         val commandBundle = Bundle().apply {
             putParcelable("SONG_TO_PLAY", song)
             putParcelable("AUTOPLAY_STRATEGY", strategy)
-            // When we start a new song, we clear the ViewModel's queue and send that empty queue
-            // This ensures we don't have stale songs from a previous session.
-            _queue.value = emptyList()
-            putParcelableArrayList("QUEUE_SONGS", ArrayList())
+            putParcelableArrayList("QUEUE_SONGS", ArrayList(_queue.value))
         }
         browser?.sendCustomCommand(
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
