@@ -20,14 +20,12 @@ data class Song(
     val artworkUrl: String,
     val previewUrl: String?, // Make this nullable to handle cases where it's missing
     val durationMillis: Long,
+    val isExplicit: Boolean,
 ) : Parcelable
 
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
-        // --- START OF CORRECTION ---
-        // This is the correct reference to our shared HttpClient object.
         val client = HttpClient.instance
-        // --- END OF CORRECTION ---
 
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
             .addQueryParameter("term", searchTerm)
@@ -49,10 +47,10 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
             val jsonObject = JSONObject(responseBody)
             val resultsArray = jsonObject.optJSONArray("results") ?: return@withContext emptyList()
 
-            val songList = mutableListOf<Song>()
+            val allSongs = mutableListOf<Song>()
             for (i in 0 until resultsArray.length()) {
                 val songObject = resultsArray.getJSONObject(i)
-                songList.add(
+                allSongs.add(
                     Song(
                         trackId = songObject.optString("trackId"), // Get the unique ID
                         trackName = songObject.optString("trackName", "Unknown Track"),
@@ -61,10 +59,11 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
                             .replace("100x100bb.jpg", "600x600bb.jpg"),
                         previewUrl = songObject.optString("previewUrl", ""),
                         durationMillis = songObject.optLong("trackTimeMillis", 0),
+                        isExplicit = songObject.optString("trackExplicitness")  in listOf("cleaned", "explicit"),
                     )
                 )
             }
-            songList
+            allSongs
         } catch (e: Exception) {
             emptyList()
         }

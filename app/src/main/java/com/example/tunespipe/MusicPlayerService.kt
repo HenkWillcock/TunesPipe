@@ -18,7 +18,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
@@ -174,17 +173,21 @@ class MusicPlayerService : MediaSessionService() {
         val itunesDurationSeconds = song.durationMillis / 1000
         val itemsToCheck = searchInfo.relatedItems.take(100)
 
-        for (item in itemsToCheck) {
-            if (item is StreamInfoItem) {
-                if (item.name.contains("live", ignoreCase = true)) {
-                    continue
-                }
+        Log.d("TunesPipe", "Found ${itemsToCheck.size} items to check. Searching for duration: $itunesDurationSeconds, explicit: ${song.isExplicit}")
 
-                val youtubeDurationSeconds = item.duration
-                if (abs(youtubeDurationSeconds - itunesDurationSeconds) <= 3) {
-                    val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
-                    return streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
-                }
+        for (item in itemsToCheck) {
+            Log.d("TunesPipe", "Checking item: ${item.name}")
+            if (item !is StreamInfoItem) {
+                continue
+            } else if (item.name.contains("live", ignoreCase = true)) {
+                continue
+            } else if (abs(item.duration - itunesDurationSeconds) >= 3) {
+                continue
+            } else if (song.isExplicit && !item.name.contains("explicit", ignoreCase = true)) {
+                continue
+            } else {
+                val streamInfo = StreamInfo.getInfo(youtubeService, item.url)
+                return streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
             }
         }
         return null
