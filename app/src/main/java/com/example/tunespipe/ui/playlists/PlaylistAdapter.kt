@@ -1,4 +1,4 @@
-package com.example.tunespipe.ui.your_library
+package com.example.tunespipe.ui.playlists
 
 import android.view.LayoutInflater
 import android.view.View

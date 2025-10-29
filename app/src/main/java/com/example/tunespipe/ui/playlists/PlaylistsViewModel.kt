@@ -1,4 +1,4 @@
-package com.example.tunespipe.ui.your_library
+package com.example.tunespipe.ui.playlists
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
@@ -10,7 +10,7 @@ import com.example.tunespipe.database.PlaylistDao
 import com.example.tunespipe.database.PlaylistSongCrossRef
 import kotlinx.coroutines.launch
 
-class YourLibraryViewModel(private val playlistDao: PlaylistDao) : ViewModel() {
+class PlaylistsViewModel(private val playlistDao: PlaylistDao) : ViewModel() {
 
     val allPlaylists: LiveData<List<Playlist>> = playlistDao.getAllPlaylists().asLiveData()
 

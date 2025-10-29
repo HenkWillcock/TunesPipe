@@ -17,8 +17,8 @@ import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.database.Playlist
 import com.example.tunespipe.databinding.FragmentSongActionsBinding
 import com.example.tunespipe.ui.playlist_detail.PlaylistDetailFragment
-import com.example.tunespipe.ui.your_library.YourLibraryViewModel
-import com.example.tunespipe.ui.your_library.YourLibraryViewModelFactory
+import com.example.tunespipe.ui.playlists.PlaylistsViewModel
+import com.example.tunespipe.ui.playlists.PlaylistsViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch // Import launch
@@ -33,8 +33,8 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         requireArguments().getParcelable(ARG_SONG)!!
     }
 
-    private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
-        YourLibraryViewModelFactory(
+    private val playlistsViewModel: PlaylistsViewModel by viewModels {
+        PlaylistsViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao()
         )
     }
@@ -82,14 +82,14 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             dismiss()
         }
 
-        yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
+        playlistsViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             binding.playlistButtonsContainer.removeAllViews()
             // --- START OF MODIFIED LOGIC ---
             // Use lifecycleScope to call suspend functions
             lifecycleScope.launch {
                 playlists.forEach { playlist ->
                     // Check if the song is already in this playlist
-                    val songIsInPlaylist = yourLibraryViewModel.isSongInPlaylist(song.trackId, playlist.id)
+                    val songIsInPlaylist = playlistsViewModel.isSongInPlaylist(song.trackId, playlist.id)
                     // Create the appropriate button
                     addPlaylistButton(playlist, songIsInPlaylist)
                 }
@@ -108,7 +108,7 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
                 // Set icon for remove action
                 setIconResource(R.drawable.ic_remove_24)
                 setOnClickListener {
-                    yourLibraryViewModel.removeSongFromPlaylist(song.trackId, playlist.id)
+                    playlistsViewModel.removeSongFromPlaylist(song.trackId, playlist.id)
                     // Refresh the dialog or dismiss it
                     dismiss()
                 }
@@ -117,7 +117,7 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
                 // Set icon for add action
                 setIconResource(R.drawable.ic_add_24)
                 setOnClickListener {
-                    yourLibraryViewModel.addSongToPlaylist(song, playlist.id)
+                    playlistsViewModel.addSongToPlaylist(song, playlist.id)
                     dismiss()
                 }
             }

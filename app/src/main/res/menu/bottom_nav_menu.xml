@@ -12,9 +12,9 @@
         android:title="@string/title_queue" />
 
     <item
-        android:id="@+id/navigation_your_library"
+        android:id="@+id/navigation_playlists"
         android:icon="@android:drawable/ic_menu_agenda"
-        android:title="@string/title_your_library" />
+        android:title="@string/title_playlists" />
 
     <item
         android:id="@+id/navigation_donate"

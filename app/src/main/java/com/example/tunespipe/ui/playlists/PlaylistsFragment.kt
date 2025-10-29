@@ -1,4 +1,4 @@
-package com.example.tunespipe.ui.your_library
+package com.example.tunespipe.ui.playlists
 
 import android.os.Bundle
 import android.text.InputType
@@ -11,16 +11,16 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.database.AppDatabase
-import com.example.tunespipe.databinding.FragmentYourLibraryBinding
+import com.example.tunespipe.databinding.FragmentPlaylistsBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-class YourLibraryFragment : Fragment() {
+class PlaylistsFragment : Fragment() {
 
-    private var _binding: FragmentYourLibraryBinding? = null
+    private var _binding: FragmentPlaylistsBinding? = null
     private val binding get() = _binding!!
 
-    private val yourLibraryViewModel: YourLibraryViewModel by viewModels {
-        YourLibraryViewModelFactory(
+    private val playlistsViewModel: PlaylistsViewModel by viewModels {
+        PlaylistsViewModelFactory(
             AppDatabase.getDatabase(requireContext()).playlistDao()
         )
     }
@@ -31,11 +31,11 @@ class YourLibraryFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = FragmentYourLibraryBinding.inflate(inflater, container, false)
+        _binding = FragmentPlaylistsBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val adapter = PlaylistAdapter { playlist ->
-            val action = YourLibraryFragmentDirections.actionYourLibraryToPlaylistDetail(
+            val action = PlaylistsFragmentDirections.actionPlaylistsToPlaylistDetail(
                 playlistId = playlist.id,
                 playlistName = playlist.name // Pass the name as an argument
             )
@@ -45,7 +45,7 @@ class YourLibraryFragment : Fragment() {
         binding.playlistsRecyclerView.adapter = adapter
         binding.playlistsRecyclerView.layoutManager = LinearLayoutManager(context)
 
-        yourLibraryViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
+        playlistsViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             playlists?.let {
                 adapter.submitList(it)
             }
@@ -70,7 +70,7 @@ class YourLibraryFragment : Fragment() {
             .setPositiveButton("Create") { dialog, _ ->
                 val playlistName = editText.text.toString()
                 if (playlistName.isNotBlank()) {
-                    yourLibraryViewModel.createNewPlaylist(playlistName)
+                    playlistsViewModel.createNewPlaylist(playlistName)
                 }
                 dialog.dismiss()
             }

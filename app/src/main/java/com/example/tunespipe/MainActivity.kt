@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             setOf(
                 R.id.navigation_search,
                 R.id.navigation_queue,
-                R.id.navigation_your_library,
+                R.id.navigation_playlists,
                 R.id.navigation_donate
             )
         )
@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             if (destination.id == R.id.playlistDetailFragment) {
-                navView.menu.findItem(R.id.navigation_your_library).isChecked = true
+                navView.menu.findItem(R.id.navigation_playlists).isChecked = true
             }
         }
 

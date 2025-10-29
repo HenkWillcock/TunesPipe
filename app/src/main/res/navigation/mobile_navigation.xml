@@ -20,12 +20,12 @@
     <!-- END OF FIX -->
 
     <fragment
-        android:id="@+id/navigation_your_library"
-        android:name="com.example.tunespipe.ui.your_library.YourLibraryFragment"
-        android:label="@string/title_your_library"
-        tools:layout="@layout/fragment_your_library" >
+        android:id="@+id/navigation_playlists"
+        android:name="com.example.tunespipe.ui.playlists.PlaylistsFragment"
+        android:label="@string/title_playlists"
+        tools:layout="@layout/fragment_playlists" >
         <action
-            android:id="@+id/action_your_library_to_playlist_detail"
+            android:id="@+id/action_playlists_to_playlist_detail"
             app:destination="@id/playlistDetailFragment" />
     </fragment>
 
