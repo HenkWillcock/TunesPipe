@@ -60,7 +60,10 @@ class MusicPlayerViewModel : ViewModel() {
         val commandBundle = Bundle().apply {
             putParcelable("SONG_TO_PLAY", song)
             putParcelable("AUTOPLAY_STRATEGY", strategy)
-            putParcelableArrayList("QUEUE_SONGS", ArrayList(_queue.value))
+            // When we start a new song, we clear the ViewModel's queue and send that empty queue
+            // This ensures we don't have stale songs from a previous session.
+            _queue.value = emptyList()
+            putParcelableArrayList("QUEUE_SONGS", ArrayList())
         }
         browser?.sendCustomCommand(
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
@@ -97,23 +100,24 @@ class MusicPlayerViewModel : ViewModel() {
         super.onCleared()
     }
 
+    // --- START OF FIX: Simplified BrowserListener ---
     private inner class BrowserListener : MediaBrowser.Listener {
         override fun onCustomCommand(
             controller: MediaController,
             command: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            if (command.customAction == "PLAY_NEXT_IN_QUEUE") {
-                val currentQueue = _queue.value
-                if (currentQueue.isNotEmpty()) {
-                    val nextSong = currentQueue.first()
-                    playSong(nextSong, _strategy.value ?: AutoplayStrategy.RepeatOne)
-                    _queue.value = currentQueue.drop(1)
+            // This listener now ONLY handles queue updates from the service
+            if (command.customAction == "UPDATE_QUEUE") {
+                val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
+                if (queueSongs != null) {
+                    _queue.value = queueSongs
                 }
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
     }
+    // --- END OF FIX ---
 
     private inner class PlayerStateListener : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {

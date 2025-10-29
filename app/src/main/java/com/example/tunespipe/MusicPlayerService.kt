@@ -49,8 +49,7 @@ class MusicPlayerService : MediaSessionService() {
             val availableSessionCommands = connectionResult.availableSessionCommands.buildUpon()
             availableSessionCommands.add(SessionCommand("PLAY_SONG", Bundle.EMPTY))
             availableSessionCommands.add(SessionCommand("UPDATE_QUEUE", Bundle.EMPTY))
-            // --- START OF FIX: Add a new command to request the next song ---
-            availableSessionCommands.add(SessionCommand("PLAY_NEXT_IN_QUEUE", Bundle.EMPTY))
+            // --- START OF FIX: Removed PLAY_NEXT_IN_QUEUE ---
             // --- END OF FIX ---
             return MediaSession.ConnectionResult.accept(
                 availableSessionCommands.build(),
@@ -87,12 +86,24 @@ class MusicPlayerService : MediaSessionService() {
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) {
+                // --- START OF FIX: Service handles its own queue logic again ---
                 if (songQueue.isNotEmpty()) {
-                    // Tell the ViewModel to handle playing the next song in the queue
-                    mediaSession?.broadcastCustomCommand(SessionCommand("PLAY_NEXT_IN_QUEUE", Bundle.EMPTY), Bundle.EMPTY)
+                    // There's a song in the queue, let's play it.
+                    val nextSong = songQueue.removeAt(0)
+
+                    // Tell the ViewModel to update its UI state for the queue.
+                    mediaSession?.broadcastCustomCommand(SessionCommand("UPDATE_QUEUE", Bundle.EMPTY), Bundle().apply {
+                        putParcelableArrayList("QUEUE_SONGS", ArrayList(songQueue))
+                    })
+
+                    // Play the song, but critically, we keep the original autoplayStrategy.
+                    // The queue passed here is the now-shortened queue.
+                    serviceScope.launch { playSongInternal(nextSong, autoplayStrategy, songQueue) }
                     return
                 }
+                // --- END OF FIX ---
 
+                // If we get here, the queue was empty. Resume normal autoplay.
                 when (val strategy = autoplayStrategy) {
                     is AutoplayStrategy.RepeatOne -> {
                         player.seekTo(0)
@@ -102,6 +113,7 @@ class MusicPlayerService : MediaSessionService() {
                         val playlistSongs = strategy.playlistWithSongs.songs
                         val nextSong = playlistSongs.filter { it != currentSong }.randomOrNull()
                         if (nextSong != null) {
+                            // Start the next shuffled song with an empty queue.
                             serviceScope.launch { playSongInternal(nextSong, strategy, emptyList()) }
                         }
                     }
