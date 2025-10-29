@@ -6,12 +6,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
 import com.example.tunespipe.R
+import com.example.tunespipe.databinding.ItemQueueHeaderBinding
 import com.example.tunespipe.databinding.ItemQueueAutoplayBinding
 import com.example.tunespipe.databinding.ItemQueueNowPlayingBinding
-// --- START OF CHANGE ---
-// We will now use the same binding as the search results
 import com.example.tunespipe.databinding.ItemSongResultBinding
-// --- END OF CHANGE ---
 import java.lang.IllegalArgumentException
 
 class QueueAdapter(
@@ -22,6 +20,7 @@ class QueueAdapter(
         private const val TYPE_NOW_PLAYING = 0
         private const val TYPE_QUEUED_SONG = 1
         private const val TYPE_AUTOPLAY = 2
+        private const val TYPE_HEADER = 3
     }
 
     inner class NowPlayingViewHolder(val binding: ItemQueueNowPlayingBinding) :
@@ -35,11 +34,15 @@ class QueueAdapter(
     inner class AutoplayViewHolder(val binding: ItemQueueAutoplayBinding) :
         RecyclerView.ViewHolder(binding.root)
 
+    class HeaderViewHolder(val binding: ItemQueueHeaderBinding) :
+        RecyclerView.ViewHolder(binding.root)
+
     override fun getItemViewType(position: Int): Int {
         return when (items[position]) {
             is QueueItem.NowPlaying -> TYPE_NOW_PLAYING
             is QueueItem.QueuedSong -> TYPE_QUEUED_SONG
             is QueueItem.Autoplay -> TYPE_AUTOPLAY
+            is QueueItem.Header -> TYPE_HEADER
         }
     }
 
@@ -59,6 +62,10 @@ class QueueAdapter(
             TYPE_AUTOPLAY -> {
                 val binding = ItemQueueAutoplayBinding.inflate(inflater, parent, false)
                 AutoplayViewHolder(binding)
+            }
+            TYPE_HEADER -> {
+                val binding = ItemQueueHeaderBinding.inflate(inflater, parent, false)
+                HeaderViewHolder(binding)
             }
             else -> throw IllegalArgumentException("Invalid view type")
         }
@@ -91,7 +98,6 @@ class QueueAdapter(
 
                 // You can add click listeners or other logic here later
             }
-            // --- END OF CHANGE ---
             is QueueItem.Autoplay -> {
                 val autoplayHolder = holder as AutoplayViewHolder
                 val strategy = currentItem.strategy
@@ -106,6 +112,10 @@ class QueueAdapter(
                         autoplayHolder.binding.strategyText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_shuffle_24, 0, 0, 0)
                     }
                 }
+            }
+            is QueueItem.Header -> {
+                val headerHolder = holder as HeaderViewHolder
+                headerHolder.binding.headerText.text = currentItem.title
             }
         }
     }

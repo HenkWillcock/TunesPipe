@@ -40,36 +40,39 @@ class QueueFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Combine all three flows to build the complete UI list
-            playerViewModel.nowPlaying.combine(playerViewModel.queue) { song, queue ->
-                Pair(song, queue)
-            }.combine(playerViewModel.strategy) { (song, queue), strategy ->
-                Triple(song, queue, strategy)
-            }.collect { (song, queue, strategy) ->
-
-                val queueItems = mutableListOf<QueueItem>()
-
-                // 1. Add "Now Playing" if it exists
-                if (song != null) {
-                    queueItems.add(QueueItem.NowPlaying(song))
+            playerViewModel.nowPlaying
+                .combine(playerViewModel.queue) { song, queue ->
+                    Pair(song, queue)
                 }
-
-                // 2. Add all the songs from the queue
-                queue.forEach { queuedSong ->
-                    queueItems.add(QueueItem.QueuedSong(queuedSong))
+                .combine(playerViewModel.strategy) { (song, queue), strategy ->
+                    Triple(song, queue, strategy)
                 }
+                .collect { (song, queue, strategy) ->
 
-                // 3. Add the autoplay strategy if it exists
-                if (strategy != null) {
-                    queueItems.add(QueueItem.Autoplay(strategy))
+                    val queueItems = mutableListOf<QueueItem>()
+
+                    // 1. Add "Now Playing" if it exists
+                    if (song != null) {
+                        queueItems.add(QueueItem.NowPlaying(song))
+                    }
+
+                    // 2. Add "Up Next" header and queued songs if the queue is not empty
+                    if (queue.isNotEmpty()) {
+                        queueItems.add(QueueItem.Header("Up Next"))
+                        queue.forEach { queuedSong ->
+                            queueItems.add(QueueItem.QueuedSong(queuedSong))
+                        }
+                    }
+
+                    // 3. Add the "Once Queue Empty" header and autoplay strategy if it exists
+                    if (strategy != null) {
+                        // This header appears whether the queue is empty or not, acting as a separator
+                        queueItems.add(QueueItem.Header("Once Queue Empty"))
+                        queueItems.add(QueueItem.Autoplay(strategy))
+                    }
+
+                    queueAdapter.updateItems(queueItems)
                 }
-
-                if (queueItems.isEmpty()) {
-                    // Handle empty case, maybe show a "Queue is empty" text
-                }
-
-                queueAdapter.updateItems(queueItems)
-            }
         }
     }
 
