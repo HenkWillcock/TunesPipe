@@ -30,6 +30,13 @@
     </fragment>
 
     <fragment
+        android:id="@+id/navigation_downloads"
+        android:name="com.example.tunespipe.ui.downloads.DownloadsFragment"
+        android:label="Downloads"
+        tools:layout="@layout/fragment_downloads" />
+    <!-- END OF NEW FRAGMENT DESTINATION -->
+
+    <fragment
         android:id="@+id/navigation_donate"
         android:name="com.example.tunespipe.ui.donate.DonateFragment"
         android:label="@string/title_donate"

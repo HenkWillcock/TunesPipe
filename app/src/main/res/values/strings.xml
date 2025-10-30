@@ -3,5 +3,6 @@
     <string name="title_search">Search</string>
     <string name="title_queue">Queue</string>
     <string name="title_playlists">Playlists</string>
+    <string name="title_downloads">Downloads</string>
     <string name="title_donate">Donate</string>
 </resources>

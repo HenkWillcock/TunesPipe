@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_search,
                 R.id.navigation_queue,
                 R.id.navigation_playlists,
+                R.id.navigation_downloads,
                 R.id.navigation_donate
             )
         )
