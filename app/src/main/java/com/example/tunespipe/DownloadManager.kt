@@ -31,13 +31,11 @@ object DownloadManager {
         return File(musicDir, getSongFileName(song))
     }
 
-    // --- START OF NEW LOGIC ---
     // Helper function to get the temporary download file
     private fun getTmpFile(context: Context, song: Song): File {
         val musicDir = context.getExternalFilesDir("Music")
         return File(musicDir, "${getSongFileName(song)}.tmp")
     }
-    // --- END OF NEW LOGIC ---
 
     // The main download function
     suspend fun downloadSong(context: Context, song: Song) {
@@ -76,19 +74,14 @@ object DownloadManager {
                 outputStream.close()
                 inputStream.close()
 
-                // --- START OF MODIFIED LOGIC: Rename on success, do nothing on failure ---
                 if (!tmpFile.renameTo(finalFile)) {
                     Log.e("DownloadManager", "Failed to rename temp file for '${song.trackName}'")
                 } else {
                     Log.d("DownloadManager", "Successfully downloaded and renamed '${song.trackName}'")
                 }
-                // --- END OF MODIFIED LOGIC ---
 
             } catch (e: Exception) {
                 Log.e("DownloadManager", "Error downloading song: ${e.message}. Partial tmp file may remain.")
-                // --- START OF MODIFIED LOGIC: No deletion in the catch block ---
-                // The partial tmpFile is intentionally left for a future cleanup process.
-                // --- END OF MODIFIED LOGIC ---
             }
         }
     }
