@@ -138,10 +138,24 @@ class MusicPlayerService : MediaSessionService() {
         this.autoplayStrategy = strategy
         this.songQueue = queue.toMutableList()
 
-        val streamUrl = withContext(Dispatchers.IO) { findBestAudioStreamUrl(song) }
+        // --- START OF MODIFIED LOGIC ---
+        val localFile = DownloadManager.getSongFile(this, song)
+        val mediaUri: String?
+
+        if (localFile.exists()) {
+            Log.d("TunesPipe", "Playing from local file: ${localFile.absolutePath}")
+            mediaUri = localFile.toURI().toString()
+        } else {
+            Log.d("TunesPipe", "Local file not found. Streaming from YouTube.")
+            mediaUri = withContext(Dispatchers.IO) { findBestAudioStreamUrl(song) }
+        }
+        // --- END OF MODIFIED LOGIC ---
+
 
         withContext(Dispatchers.Main) {
-            if (streamUrl != null) {
+            // --- START OF MODIFIED LOGIC ---
+            if (mediaUri != null) {
+                // --- END OF MODIFIED LOGIC ---
                 val metadata = MediaMetadata.Builder()
                     .setTitle(song.trackName)
                     .setArtist(song.artistName)
@@ -150,13 +164,17 @@ class MusicPlayerService : MediaSessionService() {
                     .build()
 
                 val mediaItem = MediaItem.Builder()
-                    .setUri(streamUrl)
+                    // --- START OF MODIFIED LOGIC ---
+                    .setUri(mediaUri)
+                    // --- END OF MODIFIED LOGIC ---
                     .setMediaMetadata(metadata)
                     .build()
 
                 player.setMediaItem(mediaItem)
                 player.prepare()
                 player.play()
+            } else {
+                Log.e("TunesPipe", "Could not find a playable URI for ${song.trackName}. Cannot play.")
             }
         }
     }
