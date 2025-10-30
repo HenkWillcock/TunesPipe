@@ -171,19 +171,23 @@ class MusicPlayerService : MediaSessionService() {
         )
 
         val itunesDurationSeconds = song.durationMillis / 1000
-        val itemsToCheck = searchInfo.relatedItems.take(100)
+        val itemsToCheck = searchInfo.relatedItems.take(25)
 
         Log.d("TunesPipe", "Found ${itemsToCheck.size} items to check. Searching for duration: $itunesDurationSeconds, explicit: ${song.isExplicit}")
 
         for (item in itemsToCheck) {
             Log.d("TunesPipe", "Checking item: ${item.name}")
             if (item !is StreamInfoItem) {
+                Log.d("TunesPipe", "Item is not a StreamInfoItem, skipping")
                 continue
             } else if (item.name.contains("live", ignoreCase = true)) {
+                Log.d("TunesPipe", "Item is live, skipping")
                 continue
             } else if (abs(item.duration - itunesDurationSeconds) >= 3) {
+                Log.d("TunesPipe", "Item duration is too far off, skipping")
                 continue
             } else if (song.isExplicit && !item.name.contains("explicit", ignoreCase = true)) {
+                Log.d("TunesPipe", "Item is non-explicit, skipping")
                 continue
             } else {
                 val streamInfo = StreamInfo.getInfo(youtubeService, item.url)

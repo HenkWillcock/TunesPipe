@@ -29,7 +29,7 @@ suspend fun searchITunes(searchTerm: String): List<Song> {
 
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
             .addQueryParameter("term", searchTerm)
-            .addQueryParameter("entity", "song")
+            .addQueryParameter("entity", "musicTrack")
             .build()
 
         val request = Request.Builder().url(url).build()
