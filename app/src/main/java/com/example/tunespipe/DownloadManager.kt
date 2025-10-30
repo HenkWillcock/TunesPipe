@@ -31,17 +31,26 @@ object DownloadManager {
         return File(musicDir, getSongFileName(song))
     }
 
+    // --- START OF NEW LOGIC ---
+    // Helper function to get the temporary download file
+    private fun getTmpFile(context: Context, song: Song): File {
+        val musicDir = context.getExternalFilesDir("Music")
+        return File(musicDir, "${getSongFileName(song)}.tmp")
+    }
+    // --- END OF NEW LOGIC ---
+
     // The main download function
     suspend fun downloadSong(context: Context, song: Song) {
         withContext(Dispatchers.IO) {
-            val file = getSongFile(context, song)
-            if (file.exists()) {
+            val finalFile = getSongFile(context, song)
+            val tmpFile = getTmpFile(context, song)
+
+            if (finalFile.exists()) {
                 Log.d("DownloadManager", "Song '${song.trackName}' already downloaded. Skipping.")
                 return@withContext
             }
 
             Log.d("DownloadManager", "Starting download for '${song.trackName}'")
-            // This logic is borrowed and adapted from your MusicPlayerService
             val streamUrl = findBestAudioStreamUrlForDownload(song)
 
             if (streamUrl == null) {
@@ -55,7 +64,8 @@ object DownloadManager {
                 connection.connect()
 
                 val inputStream: InputStream = connection.inputStream
-                val outputStream = FileOutputStream(file)
+                // Download to the temporary file
+                val outputStream = FileOutputStream(tmpFile)
 
                 val buffer = ByteArray(4096)
                 var bytesRead: Int
@@ -65,14 +75,20 @@ object DownloadManager {
 
                 outputStream.close()
                 inputStream.close()
-                Log.d("DownloadManager", "Successfully downloaded '${song.trackName}' to ${file.absolutePath}")
+
+                // --- START OF MODIFIED LOGIC: Rename on success, do nothing on failure ---
+                if (!tmpFile.renameTo(finalFile)) {
+                    Log.e("DownloadManager", "Failed to rename temp file for '${song.trackName}'")
+                } else {
+                    Log.d("DownloadManager", "Successfully downloaded and renamed '${song.trackName}'")
+                }
+                // --- END OF MODIFIED LOGIC ---
 
             } catch (e: Exception) {
-                Log.e("DownloadManager", "Error downloading song: ${e.message}")
-                // If download fails, delete the partial file
-                if (file.exists()) {
-                    file.delete()
-                }
+                Log.e("DownloadManager", "Error downloading song: ${e.message}. Partial tmp file may remain.")
+                // --- START OF MODIFIED LOGIC: No deletion in the catch block ---
+                // The partial tmpFile is intentionally left for a future cleanup process.
+                // --- END OF MODIFIED LOGIC ---
             }
         }
     }
