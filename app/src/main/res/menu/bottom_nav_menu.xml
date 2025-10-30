@@ -18,7 +18,7 @@
 
     <item
         android:id="@+id/navigation_downloads"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@android:drawable/stat_sys_download"
         android:title="@string/title_downloads" />
 
     <item
