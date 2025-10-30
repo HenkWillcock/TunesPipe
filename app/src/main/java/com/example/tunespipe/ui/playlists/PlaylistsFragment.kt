@@ -6,10 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkInfo
+import com.example.tunespipe.DownloadWorker
 import com.example.tunespipe.database.AppDatabase
 import com.example.tunespipe.databinding.FragmentPlaylistsBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -25,19 +28,25 @@ class PlaylistsFragment : Fragment() {
         )
     }
 
+    // Add the new ViewModel
+    private val downloadStatusViewModel: DownloadStatusViewModel by viewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding = FragmentPlaylistsBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val adapter = PlaylistAdapter { playlist ->
             val action = PlaylistsFragmentDirections.actionPlaylistsToPlaylistDetail(
                 playlistId = playlist.id,
-                playlistName = playlist.name // Pass the name as an argument
+                playlistName = playlist.name
             )
             findNavController().navigate(action)
         }
@@ -45,17 +54,49 @@ class PlaylistsFragment : Fragment() {
         binding.playlistsRecyclerView.adapter = adapter
         binding.playlistsRecyclerView.layoutManager = LinearLayoutManager(context)
 
-        playlistsViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
-            playlists?.let {
-                adapter.submitList(it)
-            }
-        }
-
         binding.fabAddPlaylist.setOnClickListener {
             showCreatePlaylistDialog()
         }
-        return root
+
+        playlistsViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
+            playlists?.let {
+                adapter.submitList(it)
+                // Refresh download stats whenever the playlists change
+                downloadStatusViewModel.updateDownloadStats()
+            }
+        }
+
+        // Set up the new observers for download status
+        setupDownloadStatusObservers()
     }
+
+    private fun setupDownloadStatusObservers() {
+        downloadStatusViewModel.downloadedCount.observe(viewLifecycleOwner) { count ->
+            binding.downloadedCountText.text = "Downloaded Songs: $count"
+        }
+
+        downloadStatusViewModel.pendingCount.observe(viewLifecycleOwner) { count ->
+            binding.pendingCountText.text = "Pending Downloads: $count"
+        }
+
+        downloadStatusViewModel.downloadWorkerInfo.observe(viewLifecycleOwner) { workInfos ->
+            val workerInfo = workInfos?.firstOrNull()
+            if (workerInfo != null && workerInfo.state == WorkInfo.State.RUNNING) {
+                val currentSong = workerInfo.progress.getString(DownloadWorker.KEY_CURRENT_SONG)
+                if (!currentSong.isNullOrEmpty()) {
+                    binding.currentlyDownloadingText.text = "Downloading: $currentSong"
+                    binding.currentlyDownloadingText.isVisible = true
+                } else {
+                    binding.currentlyDownloadingText.isVisible = false
+                }
+            } else {
+                binding.currentlyDownloadingText.isVisible = false
+                // Worker is not running, so stats might be stale. Let's refresh them.
+                downloadStatusViewModel.updateDownloadStats()
+            }
+        }
+    }
+
 
     private fun showCreatePlaylistDialog() {
         val context = requireContext()

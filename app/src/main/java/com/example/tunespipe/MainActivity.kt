@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
         // This ensures that only one instance of this worker is scheduled at a time.
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "PlaylistDownloadWorker",
-            ExistingPeriodicWorkPolicy.KEEP, // Keep the existing work if it's already scheduled.
+            ExistingPeriodicWorkPolicy.REPLACE, // Keep the existing work if it's already scheduled.
             downloadWorkRequest
         )
 

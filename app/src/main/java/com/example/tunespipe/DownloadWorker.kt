@@ -1,25 +1,33 @@
 package com.example.tunespipe
-
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.example.tunespipe.database.AppDatabase
+
 
 class DownloadWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
+    // --- START OF NEW CODE: Companion object for keys ---
+    companion object {
+        const val KEY_CURRENT_SONG = "CURRENTLY_DOWNLOADING_SONG"
+    }
+    // --- END OF NEW CODE ---
+
     override suspend fun doWork(): Result {
         Log.d("DownloadWorker", "Background download task starting...")
+        // --- START OF NEW CODE: Clear progress at the start ---
+        // Set initial progress to indicate nothing is being downloaded yet
+        setProgress(workDataOf(KEY_CURRENT_SONG to null))
+        // --- END OF NEW CODE ---
         val playlistDao = AppDatabase.getDatabase(applicationContext).playlistDao()
 
         try {
-            // Fetch all playlists with their songs
             val allPlaylistsWithSongs = playlistDao.getAllPlaylistsWithSongs()
-
-            // Flatten the list to get all unique songs across all playlists
             val allSongsInPlaylists = allPlaylistsWithSongs
                 .flatMap { it.songs }
                 .distinctBy { it.trackId }
@@ -30,17 +38,23 @@ class DownloadWorker(
                 val songFile = DownloadManager.getSongFile(applicationContext, song)
                 if (!songFile.exists()) {
                     Log.d("DownloadWorker", "Song '${song.trackName}' not found locally. Starting download.")
-                    // DownloadManager.downloadSong is already a suspend function,
-                    // so it integrates perfectly here.
+
+                    // --- START OF NEW CODE: Report current song ---
+                    val songName = "${song.artistName} - ${song.trackName}"
+                    setProgress(workDataOf(KEY_CURRENT_SONG to songName))
+                    // --- END OF NEW CODE ---
+
                     DownloadManager.downloadSong(applicationContext, song)
-                    // We download one song at a time to be respectful of network and battery.
-                    // The worker will run again later to get the next one.
+                    // We download one song at a time
                 } else {
                     Log.d("DownloadWorker", "Song '${song.trackName}' is already downloaded. Skipping.")
                 }
             }
 
             Log.d("DownloadWorker", "Background download task finished successfully.")
+            // --- START OF NEW CODE: Clear progress at the end ---
+            setProgress(workDataOf(KEY_CURRENT_SONG to null))
+            // --- END OF NEW CODE ---
             return Result.success()
         } catch (e: Exception) {
             Log.e("DownloadWorker", "Background download task failed: ${e.message}")
