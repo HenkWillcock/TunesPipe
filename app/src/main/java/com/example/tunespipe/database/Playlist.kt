@@ -52,8 +52,18 @@ interface PlaylistDao {
     suspend fun doesSongExistInPlaylist(playlistId: Long, songId: String): Int
 
     /**
+     * Fetches all playlists and all of their associated songs.
+     * This is used by the background download worker.
+     */
+    @Transaction
+    @Query("SELECT * FROM playlists")
+    suspend fun getAllPlaylistsWithSongs(): List<PlaylistWithSongs>
+
+    /**
      * Removes a song from a playlist by deleting the entry in the cross-reference table.
      */
     @Query("DELETE FROM PlaylistSongCrossRef WHERE playlistId = :playlistId AND songId = :songId")
     suspend fun removeSongFromPlaylist(playlistId: Long, songId: String)
+
+
 }

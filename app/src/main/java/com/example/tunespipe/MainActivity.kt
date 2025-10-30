@@ -3,8 +3,9 @@ package com.example.tunespipe
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Bundle
-import androidx.activity.viewModels // Import the correct viewModels delegate
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -14,6 +15,10 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.tunespipe.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.schabi.newpipe.extractor.NewPipe
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 const val NOTIFICATION_CHANNEL_ID = "tunespipe_media_playback"
 
@@ -57,6 +62,8 @@ class MainActivity : AppCompatActivity() {
 
         // Initialize the ViewModel, which will connect to the service.
         playerViewModel.initialize(this)
+
+        setupBackgroundDownloader()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -74,5 +81,22 @@ class MainActivity : AppCompatActivity() {
         val notificationManager: NotificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun setupBackgroundDownloader() {
+        // Create a periodic work request that runs roughly every 6 hours.
+        // Android may adjust the timing to save battery (e.g., run it when charging/on Wi-Fi).
+        val downloadWorkRequest = PeriodicWorkRequestBuilder<DownloadWorker>(6, TimeUnit.HOURS)
+            .build()
+
+        // Enqueue the work as unique periodic work.
+        // This ensures that only one instance of this worker is scheduled at a time.
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "PlaylistDownloadWorker",
+            ExistingPeriodicWorkPolicy.KEEP, // Keep the existing work if it's already scheduled.
+            downloadWorkRequest
+        )
+
+        Log.d("MainActivity", "Background download worker scheduled.")
     }
 }
