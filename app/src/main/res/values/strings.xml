@@ -5,4 +5,13 @@
     <string name="title_playlists">Playlists</string>
     <string name="title_downloads">Downloads</string>
     <string name="title_donate">Donate</string>
+    <string name="download_tab_description">
+        All songs saved to playlists will, by default,
+        be gradually downloaded to your device in the background.
+        \n\n
+        Future playbacks will then be instantaneous and available offline.
+        \n\n
+        The background process will restart every 6 hours.
+        To restart it now, just close and reopen the app.
+    </string>
 </resources>
