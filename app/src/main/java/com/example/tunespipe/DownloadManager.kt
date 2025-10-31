@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.tunespipe.database.AppDatabase
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -112,6 +113,52 @@ object DownloadManager {
         return bestMatch?.let {
             val streamInfo = StreamInfo.getInfo(youtubeService, it.url)
             streamInfo.audioStreams.maxByOrNull { audioStream -> audioStream.averageBitrate }?.content
+        }
+    }
+
+    suspend fun cleanupFiles(context: Context) {
+        withContext(Dispatchers.IO) {
+            Log.d("DownloadManager", "Starting cleanup process...")
+
+            val playlistDao = AppDatabase.getDatabase(context).playlistDao()
+            val musicDir = context.getExternalFilesDir("Music") ?: return@withContext
+
+            // 1. Get all song IDs that are currently in any playlist.
+            val songsInPlaylists = playlistDao.getAllPlaylistsWithSongs()
+                .flatMap { it.songs }
+            // Create a Set of expected final filenames for fast lookups.
+            val validFilenames = songsInPlaylists.map { getSongFileName(it) }.toSet()
+
+            Log.d("DownloadManager", "Found ${validFilenames.size} unique songs in playlists.")
+
+            // 2. Get all files currently in the music directory.
+            val filesOnDisk = musicDir.listFiles()
+            if (filesOnDisk.isNullOrEmpty()) {
+                Log.d("DownloadManager", "No files on disk. Cleanup finished.")
+                return@withContext
+            }
+
+            var deletedOrphanCount = 0
+            var deletedTmpCount = 0
+
+            // 3. Iterate over the files and delete orphans or temp files.
+            filesOnDisk.forEach { file ->
+                val fileName = file.name
+                if (fileName.endsWith(".tmp")) {
+                    if (file.delete()) {
+                        deletedTmpCount++
+                        Log.d("DownloadManager", "Deleted temp file: $fileName")
+                    }
+                } else if (fileName.endsWith(".m4a")) {
+                    if (!validFilenames.contains(fileName)) {
+                        if (file.delete()) {
+                            deletedOrphanCount++
+                            Log.d("DownloadManager", "Deleted orphaned song: $fileName")
+                        }
+                    }
+                }
+            }
+            Log.d("DownloadManager", "Cleanup finished. Deleted $deletedOrphanCount orphaned songs and $deletedTmpCount temp files.")
         }
     }
 }
