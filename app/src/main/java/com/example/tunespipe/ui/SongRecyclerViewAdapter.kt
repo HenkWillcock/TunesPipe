@@ -11,7 +11,9 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.tunespipe.DownloadManager
 import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.NetworkUtils
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
@@ -25,9 +27,7 @@ class SongRecyclerViewAdapter(
 ) : RecyclerView.Adapter<SongRecyclerViewAdapter.SongViewHolder>() {
 
     private var playingSong: Song? = null
-    // --- START OF FIX: Add a variable to track loading state ---
     private var isLoading: Boolean = false
-    // --- END OF FIX ---
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
@@ -40,14 +40,12 @@ class SongRecyclerViewAdapter(
                 }
                 .launchIn(scope)
 
-            // --- START OF FIX: Observe the isLoading state from the ViewModel ---
             playerViewModel.isLoading
                 .onEach { loading ->
                     isLoading = loading
                     notifyDataSetChanged()
                 }
                 .launchIn(scope)
-            // --- END OF FIX ---
         }
     }
 
@@ -64,35 +62,49 @@ class SongRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         val song = songs[position]
+        val context = holder.itemView.context
         holder.binding.trackName.text = song.trackName
         holder.binding.artistName.text = song.artistName
 
-        Glide.with(holder.itemView.context)
+        Glide.with(context)
             .load(song.artworkUrl)
             .placeholder(R.drawable.ic_launcher_foreground)
             .into(holder.binding.artworkImage)
 
         val isCurrentlyPlayingOrLoadingSong = playingSong?.trackId == song.trackId
 
-        // --- START OF FIX: Update spinner visibility logic ---
-        // Show the spinner ONLY if this is the currently "playing" song AND we are in a loading state.
         if (isCurrentlyPlayingOrLoadingSong && isLoading) {
             holder.binding.loadingSpinner.visibility = View.VISIBLE
         } else {
             holder.binding.loadingSpinner.visibility = View.GONE
         }
-        // --- END OF FIX ---
 
         if (isCurrentlyPlayingOrLoadingSong) {
-            setTextSelected(holder.binding.trackName, holder.itemView.context)
-            setTextSelected(holder.binding.artistName, holder.itemView.context)
+            setTextSelected(holder.binding.trackName, context)
+            setTextSelected(holder.binding.artistName, context)
         } else {
-            setTextNotSelected(holder.binding.trackName, holder.itemView.context)
-            setTextNotSelected(holder.binding.artistName, holder.itemView.context)
+            setTextNotSelected(holder.binding.trackName, context)
+            setTextNotSelected(holder.binding.artistName, context)
         }
 
         holder.itemView.setOnClickListener {
             onSongClicked(song)
+        }
+
+        // By default, everything is enabled and visible.
+        holder.binding.notDownloadedText.visibility = View.GONE
+        holder.itemView.alpha = 1.0f
+        holder.itemView.isClickable = true
+
+        if (!NetworkUtils.isOnline(context)) {
+            val songFile = DownloadManager.getSongFile(context, song)
+            if (!songFile.exists()) {
+                // We are offline AND the song is not downloaded.
+                // Grey out the item and disable clicks. This will now correctly override the listener.
+                holder.binding.notDownloadedText.visibility = View.VISIBLE
+                holder.itemView.alpha = 0.5f
+                holder.itemView.isClickable = false // This is now the last instruction and will stick.
+            }
         }
     }
 

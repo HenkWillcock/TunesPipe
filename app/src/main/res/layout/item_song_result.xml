@@ -6,55 +6,67 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <!-- Album Art -->
-    <ImageView
-        android:id="@+id/artworkImage"
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/artwork_image"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
         tools:srcCompat="@tools:sample/avatars" />
 
-    <ProgressBar
-        android:id="@+id/loadingSpinner"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/artworkImage"
-        app:layout_constraintEnd_toEndOf="@id/artworkImage"
-        app:layout_constraintStart_toStartOf="@id/artworkImage"
-        app:layout_constraintTop_toTopOf="@id/artworkImage"
-        tools:visibility="visible" />
-
-    <!-- Track Name -->
     <TextView
-        android:id="@+id/trackName"
+        android:id="@+id/track_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="?attr/textAppearanceListItem"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/artworkImage"
-        app:layout_constraintTop_toTopOf="@id/artworkImage"
-        tools:text="The Longest Song Title in the World Ever" />
+        android:textColor="@android:color/white"
+        app:layout_constraintEnd_toStartOf="@+id/loading_spinner"
+        app:layout_constraintStart_toEndOf="@id/artwork_image"
+        app:layout_constraintTop_toTopOf="@id/artwork_image"
+        tools:text="Very Long Song Title That Will Be Truncated" />
 
-    <!-- Artist Name -->
     <TextView
-        android:id="@+id/artistName"
+        android:id="@+id/artist_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="?attr/textAppearanceListItemSecondary"
+        android:textColor="@android:color/darker_gray"
+        app:layout_constraintEnd_toStartOf="@+id/loading_spinner"
+        app:layout_constraintStart_toStartOf="@id/track_name"
+        app:layout_constraintTop_toBottomOf="@id/track_name"
+        tools:text="Artist Name" />
+
+    <ProgressBar
+        android:id="@+id/loading_spinner"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@id/trackName"
-        app:layout_constraintTop_toBottomOf="@id/trackName"
-        tools:text="A Very Famous Artist" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <!-- START OF NEW CODE -->
+    <TextView
+        android:id="@+id/not_downloaded_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Not Downloaded"
+        android:textColor="@color/material_grey_600"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/artwork_image"
+        app:layout_constraintStart_toStartOf="@id/track_name"
+        app:layout_constraintTop_toBottomOf="@id/artist_name"
+        tools:visibility="visible" />
+    <!-- END OF NEW CODE -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -85,7 +85,6 @@ class MusicPlayerService : MediaSessionService() {
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) {
-                // --- START OF FIX: Service handles its own queue logic again ---
                 if (songQueue.isNotEmpty()) {
                     // There's a song in the queue, let's play it.
                     val nextSong = songQueue.removeAt(0)
@@ -100,7 +99,6 @@ class MusicPlayerService : MediaSessionService() {
                     serviceScope.launch { playSongInternal(nextSong, autoplayStrategy, songQueue) }
                     return
                 }
-                // --- END OF FIX ---
 
                 // If we get here, the queue was empty. Resume normal autoplay.
                 when (val strategy = autoplayStrategy) {
@@ -109,11 +107,34 @@ class MusicPlayerService : MediaSessionService() {
                         player.playWhenReady = true
                     }
                     is AutoplayStrategy.ShufflePlaylist -> {
-                        val playlistSongs = strategy.playlistWithSongs.songs
-                        val nextSong = playlistSongs.filter { it != currentSong }.randomOrNull()
+                        val allPlaylistSongs = strategy.playlistWithSongs.songs
+
+                        // --- START OF NEW LOGIC ---
+                        // 1. First, check if we are offline. Shuffle works normally online.
+                        val onlyShuffleDownloaded = !NetworkUtils.isOnline(this@MusicPlayerService)
+
+                        val potentialNextSongs = if (onlyShuffleDownloaded) {
+                            // 2. OFFLINE: Filter the playlist for songs that ARE downloaded.
+                            Log.d("MusicPlayerService", "Offline Shuffle: Filtering for downloaded songs.")
+                            allPlaylistSongs.filter { song ->
+                                DownloadManager.getSongFile(this@MusicPlayerService, song).exists()
+                            }
+                        } else {
+                            // 3. ONLINE: All songs are candidates.
+                            allPlaylistSongs
+                        }
+
+                        // 4. From the candidates, pick a random one that isn't the current song.
+                        val nextSong = potentialNextSongs.filter { it != currentSong }.randomOrNull()
+                        // --- END OF NEW LOGIC ---
+
                         if (nextSong != null) {
+                            Log.d("MusicPlayerService", "Shuffle: Playing next song '${nextSong.trackName}'")
                             // Start the next shuffled song with an empty queue.
                             serviceScope.launch { playSongInternal(nextSong, strategy, emptyList()) }
+                        } else {
+                            Log.d("MusicPlayerService", "Shuffle: No other suitable song found to play.")
+                            // If no other song is available (e.g., offline and none downloaded), playback will simply stop.
                         }
                     }
                 }
