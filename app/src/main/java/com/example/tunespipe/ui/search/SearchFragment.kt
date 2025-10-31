@@ -6,12 +6,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.NetworkUtils
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
@@ -35,6 +37,23 @@ class SearchFragment : Fragment() {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
         setupSearchView()
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        if (NetworkUtils.isOnline(requireContext())) {
+            // We are online, show the normal UI
+            binding.searchView.isVisible = true
+            binding.searchResultsRecycler.isVisible = true
+            binding.offlineMessageText.isVisible = false
+            setupSearchView()
+        } else {
+            // We are offline, show the offline message
+            binding.searchView.isVisible = false
+            binding.searchResultsRecycler.isVisible = false
+            binding.offlineMessageText.isVisible = true
+        }
     }
 
     private fun setupSearchView() {

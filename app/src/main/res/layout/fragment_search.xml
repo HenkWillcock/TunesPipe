@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".ui.search.SearchFragment">
 
-    <!-- START OF FIX: Change from SearchView to androidx.appcompat.widget.SearchView -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
         android:layout_width="0dp"
@@ -18,7 +17,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-    <!-- END OF FIX -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchResultsRecycler"
@@ -29,5 +27,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/searchView"
         tools:listitem="@layout/item_song_result" />
+
+    <!-- START OF NEW CODE: Offline message -->
+    <TextView
+        android:id="@+id/offline_message_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="You must be online to search."
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+    <!-- END OF NEW CODE -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

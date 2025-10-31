@@ -7,7 +7,7 @@
     <string name="title_donate">Donate</string>
     <string name="download_tab_description">
         All songs saved to playlists will, by default,
-        be gradually downloaded to your device in the background.
+        be gradually downloaded to your device in the background whenever WiFi is available.
         \n\n
         Future playbacks will then be instantaneous and available offline.
         \n\n
