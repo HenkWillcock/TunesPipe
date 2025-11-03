@@ -6,12 +6,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.isVisible // Import isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.NetworkUtils // Import NetworkUtils
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
@@ -24,7 +26,6 @@ class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
 
-    // Get a reference to the shared ViewModel from the activity
     private val playerViewModel: MusicPlayerViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -33,9 +34,28 @@ class SearchFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
-        setupSearchView()
+        // Note: setupSearchView() is now called from onViewCreated
         return binding.root
     }
+
+    // START OF CHANGE
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        if (NetworkUtils.isOnline(requireContext())) {
+            // We are online, show the normal UI
+            binding.searchView.isVisible = true
+            binding.searchResultsRecycler.isVisible = true
+            binding.offlineMessageText.isVisible = false
+            setupSearchView()
+        } else {
+            // We are offline, show the offline message
+            binding.searchView.isVisible = false
+            binding.searchResultsRecycler.isVisible = false
+            binding.offlineMessageText.isVisible = true
+        }
+    }
+    // END OF CHANGE
 
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -64,7 +84,6 @@ class SearchFragment : Fragment() {
 
     @UnstableApi
     private fun displaySearchResults(songs: List<Song>) {
-        // Pass the playerViewModel into the adapter's constructor
         val songAdapter = SongRecyclerViewAdapter(songs, playerViewModel) { clickedSong ->
             Log.d("SearchFragment", "User clicked: ${clickedSong.trackName}")
 

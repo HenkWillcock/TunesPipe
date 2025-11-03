@@ -151,7 +151,6 @@ class MusicPlayerService : MediaSessionService() {
         }
         // --- END OF MODIFIED LOGIC ---
 
-
         withContext(Dispatchers.Main) {
             // --- START OF MODIFIED LOGIC ---
             if (mediaUri != null) {
@@ -164,9 +163,7 @@ class MusicPlayerService : MediaSessionService() {
                     .build()
 
                 val mediaItem = MediaItem.Builder()
-                    // --- START OF MODIFIED LOGIC ---
                     .setUri(mediaUri)
-                    // --- END OF MODIFIED LOGIC ---
                     .setMediaMetadata(metadata)
                     .build()
 
