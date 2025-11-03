@@ -109,11 +109,31 @@ class MusicPlayerService : MediaSessionService() {
                         player.playWhenReady = true
                     }
                     is AutoplayStrategy.ShufflePlaylist -> {
-                        val playlistSongs = strategy.playlistWithSongs.songs
-                        val nextSong = playlistSongs.filter { it != currentSong }.randomOrNull()
+                        val allPlaylistSongs = strategy.playlistWithSongs.songs
+
+                        // --- START OF NEW LOGIC ---
+                        // Determine which songs are valid candidates for shuffle
+                        val candidateSongs = if (!NetworkUtils.isOnline(this@MusicPlayerService)) {
+                            // OFFLINE: Filter the playlist for songs that are actually downloaded.
+                            Log.d("MusicPlayerService", "Offline Shuffle: Filtering for downloaded songs only.")
+                            allPlaylistSongs.filter { song ->
+                                DownloadManager.getSongFile(this@MusicPlayerService, song).exists()
+                            }
+                        } else {
+                            // ONLINE: All songs in the playlist are valid candidates.
+                            allPlaylistSongs
+                        }
+
+                        // From the valid candidates, pick a random one that isn't the current song.
+                        val nextSong = candidateSongs.filter { it != currentSong }.randomOrNull()
+                        // --- END OF NEW LOGIC ---
+
                         if (nextSong != null) {
-                            // Start the next shuffled song with an empty queue.
+                            Log.d("MusicPlayerService", "Shuffle: Playing next song '${nextSong.trackName}'")
                             serviceScope.launch { playSongInternal(nextSong, strategy, emptyList()) }
+                        } else {
+                            Log.d("MusicPlayerService", "Shuffle: No other suitable song found to play.")
+                            // If no other song is available (e.g., offline and no others are downloaded), playback will stop.
                         }
                     }
                 }

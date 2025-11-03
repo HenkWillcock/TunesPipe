@@ -11,7 +11,9 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.tunespipe.DownloadManager
 import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.NetworkUtils
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.ItemSongResultBinding
@@ -64,6 +66,7 @@ class SongRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         val song = songs[position]
+        val context = holder.itemView.context
         holder.binding.trackName.text = song.trackName
         holder.binding.artistName.text = song.artistName
 
@@ -93,6 +96,22 @@ class SongRecyclerViewAdapter(
 
         holder.itemView.setOnClickListener {
             onSongClicked(song)
+        }
+
+        holder.binding.notDownloadedText.visibility = View.GONE
+        holder.itemView.alpha = 1.0f
+        holder.itemView.isClickable = true
+
+        // Now, apply offline state if necessary
+        if (!NetworkUtils.isOnline(context)) {
+            val songFile = DownloadManager.getSongFile(context, song)
+            if (!songFile.exists()) {
+                // We are offline AND the song is not downloaded.
+                // Grey out the item, show the text, and disable clicks.
+                holder.binding.notDownloadedText.visibility = View.VISIBLE
+                holder.itemView.alpha = 0.5f
+                holder.itemView.isClickable = false
+            }
         }
     }
 

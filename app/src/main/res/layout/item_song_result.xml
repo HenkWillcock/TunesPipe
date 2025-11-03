@@ -57,4 +57,15 @@
         app:layout_constraintTop_toBottomOf="@id/trackName"
         tools:text="A Very Famous Artist" />
 
+    <TextView
+        android:id="@+id/not_downloaded_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Not Downloaded"
+        android:textColor="@color/material_grey_600"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/trackName"
+        app:layout_constraintTop_toBottomOf="@id/artistName"
+        tools:visibility="visible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
