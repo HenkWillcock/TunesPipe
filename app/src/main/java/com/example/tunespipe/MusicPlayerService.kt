@@ -60,7 +60,7 @@ class MusicPlayerService : MediaSessionService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
             customCommand: SessionCommand,
-            args: Bundle
+            args: Bundle,
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
                 "UPDATE_QUEUE" -> {
@@ -74,7 +74,9 @@ class MusicPlayerService : MediaSessionService() {
                     val strategy = args.getParcelable<AutoplayStrategy>("AUTOPLAY_STRATEGY")
                     val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
                     if (song != null && strategy != null) {
-                        serviceScope.launch { playSongInternal(song, strategy, queueSongs ?: emptyList()) }
+                        // The queue is now set just before playing.
+                        this@MusicPlayerService.songQueue = queueSongs?.toMutableList() ?: mutableListOf()
+                        serviceScope.launch { playSongInternal(song, strategy) } // No longer passing queue here
                     }
                 }
             }
@@ -97,7 +99,7 @@ class MusicPlayerService : MediaSessionService() {
 
                     // Play the song, but critically, we keep the original autoplayStrategy.
                     // The queue passed here is the now-shortened queue.
-                    serviceScope.launch { playSongInternal(nextSong, autoplayStrategy, songQueue) }
+                    serviceScope.launch { playSongInternal(nextSong, autoplayStrategy) }
                     return
                 }
                 // --- END OF FIX ---
@@ -130,7 +132,7 @@ class MusicPlayerService : MediaSessionService() {
 
                         if (nextSong != null) {
                             Log.d("MusicPlayerService", "Shuffle: Playing next song '${nextSong.trackName}'")
-                            serviceScope.launch { playSongInternal(nextSong, strategy, emptyList()) }
+                            serviceScope.launch { playSongInternal(nextSong, strategy) }
                         } else {
                             Log.d("MusicPlayerService", "Shuffle: No other suitable song found to play.")
                             // If no other song is available (e.g., offline and no others are downloaded), playback will stop.
@@ -153,10 +155,9 @@ class MusicPlayerService : MediaSessionService() {
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
     }
 
-    private suspend fun playSongInternal(song: Song, strategy: AutoplayStrategy, queue: List<Song>) {
+    private suspend fun playSongInternal(song: Song, strategy: AutoplayStrategy) {
         this.currentSong = song
         this.autoplayStrategy = strategy
-        this.songQueue = queue.toMutableList()
 
         // --- START OF MODIFIED LOGIC ---
         val localFile = DownloadManager.getSongFile(this, song)
