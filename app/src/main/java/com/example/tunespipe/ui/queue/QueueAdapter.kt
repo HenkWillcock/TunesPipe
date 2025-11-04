@@ -53,12 +53,10 @@ class QueueAdapter(
                 val binding = ItemQueueNowPlayingBinding.inflate(inflater, parent, false)
                 NowPlayingViewHolder(binding)
             }
-            // --- START OF CHANGE: Inflate the correct layout for a queued song ---
             TYPE_QUEUED_SONG -> {
                 val binding = ItemSongResultBinding.inflate(inflater, parent, false)
                 QueuedSongViewHolder(binding)
             }
-            // --- END OF CHANGE ---
             TYPE_AUTOPLAY -> {
                 val binding = ItemQueueAutoplayBinding.inflate(inflater, parent, false)
                 AutoplayViewHolder(binding)

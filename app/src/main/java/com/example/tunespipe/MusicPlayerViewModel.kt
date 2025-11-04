@@ -3,6 +3,8 @@ package com.example.tunespipe
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -15,6 +17,8 @@ import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.guava.await
@@ -24,17 +28,68 @@ class MusicPlayerViewModel : ViewModel() {
 
     private var browser: MediaBrowser? = null
 
+    private val _playerPosition = MutableLiveData<Long>()
+    val playerPosition: LiveData<Long> = _playerPosition
+    private var progressJob: Job? = null
+
     private val _nowPlaying = MutableStateFlow<Song?>(null)
     val nowPlaying = _nowPlaying.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _strategy = MutableStateFlow<AutoplayStrategy?>(null)
-    val strategy = _strategy.asStateFlow()
+    fun playSong(songs: List<Song>, startIndex: Int, shuffle: Boolean, repeat: Boolean) {
+        if (browser == null || songs.isEmpty()) return
 
-    private val _queue = MutableStateFlow<List<Song>>(emptyList())
-    val queue = _queue.asStateFlow()
+        _isLoading.value = true
+        _nowPlaying.value = songs[startIndex]
+
+        val commandBundle = Bundle().apply {
+            putParcelableArrayList("SONGS_TO_PLAY", ArrayList(songs))
+            putInt("START_INDEX", startIndex)
+            // --- Add these new parameters ---
+            putBoolean("SHUFFLE", shuffle)
+            putBoolean("REPEAT", repeat)
+        }
+        browser?.sendCustomCommand(
+            SessionCommand("PLAY_SONG", Bundle.EMPTY),
+            commandBundle,
+        )
+    }
+
+    // --- START OF CHANGE: Functions to be removed or changed later ---
+    // These now need to be re-implemented to talk to ExoPlayer directly
+    fun playNext(song: Song) {
+        val commandBundle = Bundle().apply {
+            putParcelable("SONG", song)
+        }
+        browser?.sendCustomCommand(
+            SessionCommand("PLAY_NEXT", Bundle.EMPTY),
+            commandBundle,
+        )
+    }
+
+    fun addSongToQueue(song: Song) {
+        val commandBundle = Bundle().apply {
+            putParcelable("SONG", song)
+        }
+        browser?.sendCustomCommand(
+            SessionCommand("ADD_TO_QUEUE", Bundle.EMPTY),
+            commandBundle
+        )
+    }
+
+    fun seekTo(position: Long) {
+        browser?.seekTo(position)
+    }
+
+    fun skipToNext() {
+        browser?.seekToNext()
+    }
+
+    fun skipToPrevious() {
+        browser?.seekToPrevious()
+    }
 
     fun initialize(context: Context) {
         if (browser == null) {
@@ -50,71 +105,38 @@ class MusicPlayerViewModel : ViewModel() {
         }
     }
 
-    fun playSong(song: Song, strategy: AutoplayStrategy) {
-        if (browser == null) return
-
-        _isLoading.value = true
-        _nowPlaying.value = song
-        _strategy.value = strategy
-
-        val commandBundle = Bundle().apply {
-            putParcelable("SONG_TO_PLAY", song)
-            putParcelable("AUTOPLAY_STRATEGY", strategy)
-            putParcelableArrayList("QUEUE_SONGS", ArrayList(_queue.value))
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = viewModelScope.launch {
+            while (true) {
+                browser?.currentPosition?.let {
+                    _playerPosition.postValue(it)
+                }
+                delay(500)
+            }
         }
-        browser?.sendCustomCommand(
-            SessionCommand("PLAY_SONG", Bundle.EMPTY),
-            commandBundle,
-        )
     }
 
-    fun playNext(song: Song) {
-        _queue.value = listOf(song) + _queue.value
-        sendQueueUpdateToService()
-    }
-
-    fun addSongToQueue(song: Song) {
-        _queue.value = _queue.value + song
-        sendQueueUpdateToService()
-    }
-
-    private fun sendQueueUpdateToService() {
-        if (browser == null) return
-
-        val queueToSend = ArrayList(_queue.value)
-
-        val commandBundle = Bundle().apply {
-            putParcelableArrayList("QUEUE_SONGS", queueToSend)
-        }
-        browser?.sendCustomCommand(
-            SessionCommand("UPDATE_QUEUE", Bundle.EMPTY),
-            commandBundle
-        )
+    private fun stopProgressUpdates() {
+        progressJob?.cancel()
     }
 
     override fun onCleared() {
+        stopProgressUpdates()
         browser?.release()
         super.onCleared()
     }
 
-    // --- START OF FIX: Simplified BrowserListener ---
     private inner class BrowserListener : MediaBrowser.Listener {
         override fun onCustomCommand(
             controller: MediaController,
             command: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            // This listener now ONLY handles queue updates from the service
-            if (command.customAction == "UPDATE_QUEUE") {
-                val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
-                if (queueSongs != null) {
-                    _queue.value = queueSongs
-                }
-            }
+            // This can be simplified or removed later as we rely less on custom commands
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
     }
-    // --- END OF FIX ---
 
     private inner class PlayerStateListener : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -125,11 +147,15 @@ class MusicPlayerViewModel : ViewModel() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             if (isPlaying) {
                 _isLoading.value = false
+                startProgressUpdates()
+            } else {
+                stopProgressUpdates()
             }
         }
 
         override fun onPlayerError(error: PlaybackException) {
             _isLoading.value = false
+            stopProgressUpdates()
         }
     }
 }

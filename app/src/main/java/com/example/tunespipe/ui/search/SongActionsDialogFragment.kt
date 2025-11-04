@@ -62,14 +62,26 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
         binding.playNowButton.setOnClickListener {
             dismiss()
-            val strategy = if (parentFragment is PlaylistDetailFragment) {
+
+            val songsToPlay: List<Song>
+            val startIndex: Int
+
+            if (parentFragment is PlaylistDetailFragment) {
+                // If we are in a playlist, the queue is the whole playlist
                 val playlistFragment = parentFragment as PlaylistDetailFragment
-                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value!!
-                AutoplayStrategy.ShufflePlaylist(playlistWithSongs)
+                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value
+                songsToPlay = playlistWithSongs?.songs ?: listOf(song)
+                // Find the index of the song we clicked
+                startIndex = songsToPlay.indexOf(song).coerceAtLeast(0)
             } else {
-                AutoplayStrategy.RepeatOne
+                // If we are not in a playlist (e.g., search), the queue is just the one song
+                songsToPlay = listOf(song)
+                startIndex = 0
             }
-            playerViewModel.playSong(song, strategy)
+
+            val shuffle = false // For now, we are not shuffling when playing from a list
+            val repeat = true   // We want the playlist/song to repeat
+            playerViewModel.playSong(songsToPlay, startIndex, shuffle, repeat)
         }
 
         binding.playNextButton.setOnClickListener {
