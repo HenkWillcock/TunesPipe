@@ -64,31 +64,68 @@ class MusicPlayerService : MediaSessionService() {
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
                 "PLAY_SONG" -> {
-                    // Get the list of songs and the starting index from the ViewModel
                     val songsToPlay = args.getParcelableArrayList<Song>("SONGS_TO_PLAY")
                     val startIndex = args.getInt("START_INDEX", 0)
                     val shuffle = args.getBoolean("SHUFFLE", false)
                     val repeat = args.getBoolean("REPEAT", false)
 
-                    if (!songsToPlay.isNullOrEmpty()) {
-                        // Launch a coroutine to fetch URLs and then update the player on the main thread
-                        serviceScope.launch {
-                            // This part runs in the background
-                            val mediaItems = songsToPlay.mapNotNull { song ->
-                                createMediaItemFromSong(song)
-                            }
+                    if (songsToPlay.isNullOrEmpty()) {
+                        return@onCustomCommand Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                    }
 
-                            // Switch back to the main thread to interact with the player
-                            withContext(Dispatchers.Main) {
-                                if (mediaItems.isNotEmpty()) {
-                                    player.shuffleModeEnabled = shuffle
-                                    player.repeatMode = if (repeat) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
-                                    player.clearMediaItems()
-                                    player.addMediaItems(mediaItems)
-                                    player.seekTo(startIndex, 0) // Seek to the correct song
-                                    player.prepare()
-                                    player.play()
-                                }
+                    // --- START OF NEW LOGIC ---
+                    serviceScope.launch {
+                        // 1. Get the song we need to play right now.
+                        val firstSong = songsToPlay[startIndex]
+
+                        // 2. Fetch the URL for ONLY that song.
+                        val firstStreamUrl = withContext(Dispatchers.IO) {
+                            findBestAudioStreamUrl(firstSong)
+                        }
+
+                        if (firstStreamUrl == null) {
+                            Log.e(
+                                "MusicPlayerService",
+                                "Could not get stream for the first song. Aborting."
+                            )
+                            return@launch
+                        }
+
+                        // 3. Create a single, fully resolved MediaItem.
+                        val resolvedFirstMediaItem = MediaItem.Builder()
+                            .setUri(firstStreamUrl)
+                            .setMediaId(firstSong.trackId)
+                            .setMediaMetadata(
+                                MediaMetadata.Builder()
+                                    .setTitle(firstSong.trackName)
+                                    .setArtist(firstSong.artistName)
+                                    .setArtworkUri(android.net.Uri.parse(firstSong.artworkUrl))
+                                    .setExtras(Bundle().apply {
+                                        putParcelable(
+                                            "SONG_METADATA",
+                                            firstSong
+                                        )
+                                    })
+                                    .build()
+                            )
+                            .build()
+
+                        // 4. Update the player on the main thread to play this one song.
+                        withContext(Dispatchers.Main) {
+                            player.shuffleModeEnabled = shuffle
+                            player.repeatMode =
+                                if (repeat) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+
+                            player.clearMediaItems()
+                            player.setMediaItem(resolvedFirstMediaItem) // Use setMediaItem for a single song
+
+                            player.prepare()
+                            player.play()
+
+                            // 5. Fire-and-forget a background task to add the rest of the songs.
+                            launch {
+                                // We pass the full list and the index of the song we already added.
+                                resolveAndAddRemainingSongs(songsToPlay, startIndex)
                             }
                         }
                     }
@@ -158,6 +195,47 @@ class MusicPlayerService : MediaSessionService() {
             .build()
 
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
+    }
+
+    private suspend fun resolveAndAddRemainingSongs(songs: List<Song>, alreadyAddedIndex: Int) {
+        Log.d("MusicPlayerService", "Starting background task to add remaining songs to queue.")
+
+        // Iterate through the original list of songs
+        for ((index, song) in songs.withIndex()) {
+            // Skip the song that is already in the queue and playing
+            if (index == alreadyAddedIndex) {
+                continue
+            }
+
+            // Fetch the URL for the next song in the list
+            val streamUrl = withContext(Dispatchers.IO) {
+                findBestAudioStreamUrl(song)
+            }
+
+            if (streamUrl != null) {
+                val resolvedItem = MediaItem.Builder()
+                    .setUri(streamUrl)
+                    .setMediaId(song.trackId)
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(song.trackName)
+                            .setArtist(song.artistName)
+                            .setArtworkUri(android.net.Uri.parse(song.artworkUrl))
+                            .setExtras(Bundle().apply { putParcelable("SONG_METADATA", song) })
+                            .build()
+                    )
+                    .build()
+
+                // Switch to the main thread briefly to add the new song to the player's queue.
+                withContext(Dispatchers.Main) {
+                    Log.d("MusicPlayerService", "Adding '${song.trackName}' to the end of the queue.")
+                    player.addMediaItem(resolvedItem)
+                }
+            } else {
+                Log.w("MusicPlayerService", "Could not resolve URL for '${song.trackName}'. Skipping.")
+            }
+        }
+        Log.d("MusicPlayerService", "Background queue population complete.")
     }
 
     private fun findBestAudioStreamUrl(song: Song): String? {
