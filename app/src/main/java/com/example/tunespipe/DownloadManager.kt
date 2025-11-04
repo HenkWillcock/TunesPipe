@@ -50,7 +50,7 @@ object DownloadManager {
             }
 
             Log.d("DownloadManager", "Starting download for '${song.trackName}'")
-            val streamUrl = findBestAudioStreamUrlForDownload(song)
+            val streamUrl = findBestAudioStreamUrl(context, song)
 
             if (streamUrl == null) {
                 Log.e("DownloadManager", "Could not find a suitable stream URL for ${song.trackName}")
@@ -88,7 +88,13 @@ object DownloadManager {
     }
 
     // This is the same YouTube search logic from MusicPlayerService, ensuring consistency
-    private fun findBestAudioStreamUrlForDownload(song: Song): String? {
+    fun findBestAudioStreamUrl(context: Context, song: Song): String? {
+        val localFile = getSongFile(context, song)
+        if (localFile.exists()) {
+            Log.d("DownloadManager", "Found local file for '${song.trackName}'. Playing from device.")
+            return localFile.toURI().toString()
+        }
+
         val searchQuery = "${song.artistName} - ${song.trackName}"
         val youtubeService = NewPipe.getService(0)
         val searchInfo = SearchInfo.getInfo(

@@ -85,7 +85,10 @@ class MusicPlayerService : MediaSessionService() {
 
                         // 2. Fetch the URL for ONLY that song.
                         val firstStreamUrl = withContext(Dispatchers.IO) {
-                            findBestAudioStreamUrl(firstSong)
+                            DownloadManager.findBestAudioStreamUrl(
+                                this@MusicPlayerService,
+                                firstSong,
+                            )
                         }
 
                         if (firstStreamUrl == null) {
@@ -172,7 +175,10 @@ class MusicPlayerService : MediaSessionService() {
 
     private suspend fun createMediaItemFromSong(song: Song): MediaItem? = withContext(Dispatchers.IO) {
         // Now this block runs on a background thread
-        val mediaUri = findBestAudioStreamUrl(song)
+        val mediaUri = DownloadManager.findBestAudioStreamUrl(
+            this@MusicPlayerService,
+            song,
+        )
         if (mediaUri != null) {
             MediaItem.Builder()
                 .setUri(mediaUri)
@@ -214,7 +220,10 @@ class MusicPlayerService : MediaSessionService() {
 
             // Fetch the URL for the next song in the list
             val streamUrl = withContext(Dispatchers.IO) {
-                findBestAudioStreamUrl(song)
+                DownloadManager.findBestAudioStreamUrl(
+                    this@MusicPlayerService,
+                    song,
+                )
             }
 
             if (streamUrl != null) {
@@ -241,67 +250,6 @@ class MusicPlayerService : MediaSessionService() {
             }
         }
         Log.d("MusicPlayerService", "Background queue population complete.")
-    }
-
-    private fun findBestAudioStreamUrl(song: Song): String? {
-        val searchQuery = "${song.artistName} - ${song.trackName}"
-        Log.d("TunesPipe", "############# Starting YouTube search for: $searchQuery")
-        val youtubeService = NewPipe.getService(0)
-        val searchInfo = SearchInfo.getInfo(
-            youtubeService,
-            youtubeService.searchQHFactory.fromQuery(searchQuery),
-        )
-
-        val itunesDurationSeconds = song.durationMillis / 1000
-        val itemsToCheck = searchInfo.relatedItems.take(5).filterIsInstance<StreamInfoItem>()
-
-        Log.d("TunesPipe", "############# Checking top ${itemsToCheck.size} results for duration: $itunesDurationSeconds, explicit: ${song.isExplicit}")
-
-        // 2. Filter by song length (within 2 seconds), but only if it doesn't filter out everything.
-        val durationFiltered = itemsToCheck.filter { abs(it.duration - itunesDurationSeconds) <= 2 }
-        val candidates = if (durationFiltered.isNotEmpty()) {
-            Log.d("TunesPipe", "############# Using duration-filtered list of ${durationFiltered.size} items.")
-            durationFiltered
-        } else {
-            Log.d("TunesPipe", "############# Duration filter produced no results, using original list of ${itemsToCheck.size} items.")
-            itemsToCheck
-        }
-
-        // 3. Score candidates based on priority words.
-        val priorityWords = listOf("lyric", "remaster")
-        val explicitWord = "explicit"
-
-        val bestMatch = candidates.maxByOrNull { item ->
-            var score = 0
-            val title = item.name.lowercase()
-
-            if (priorityWords.any { title.contains(it) }) {
-                score += 10  // Lyrics or remasters are usually solid.
-            }
-            if (song.isExplicit && title.contains(explicitWord)) {
-                score += 100  // Getting one explicit is super important. Cleaned are unlistenable.
-            }
-
-            Log.d("TunesPipe", "############# Scoring '${item.name}'. Final Score: $score")
-            score
-        }
-
-        // After scoring, we just need the best match. The position in the original list acts
-        // as the tie-breaker because maxByOrNull returns the *first* element with the max value.
-
-        return if (bestMatch != null) {
-            Log.d("TunesPipe", "############# Best match chosen: '${bestMatch.name}' with duration ${bestMatch.duration}s.")
-            val streamInfo = StreamInfo.getInfo(youtubeService, bestMatch.url)
-            streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
-        } else {
-            Log.d("TunesPipe", "############# No suitable match found after checking all candidates.")
-            // Fallback to the closest duration if all scoring fails (though this is unlikely)
-            itemsToCheck.minByOrNull { abs(it.duration - itunesDurationSeconds) }?.let { fallbackMatch ->
-                Log.d("TunesPipe", "############# Falling back to closest duration: '${fallbackMatch.name}'")
-                val streamInfo = StreamInfo.getInfo(youtubeService, fallbackMatch.url)
-                streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
-            }
-        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
