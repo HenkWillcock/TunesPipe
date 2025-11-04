@@ -226,20 +226,9 @@ class MusicPlayerService : MediaSessionService() {
                 )
             }
 
-            if (streamUrl != null) {
-                val resolvedItem = MediaItem.Builder()
-                    .setUri(streamUrl)
-                    .setMediaId(song.trackId)
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setTitle(song.trackName)
-                            .setArtist(song.artistName)
-                            .setArtworkUri(android.net.Uri.parse(song.artworkUrl))
-                            .setExtras(Bundle().apply { putParcelable("SONG_METADATA", song) })
-                            .build()
-                    )
-                    .build()
+            val resolvedItem = createMediaItemFromSong(song)
 
+            if (resolvedItem != null) {
                 // Switch to the main thread briefly to add the new song to the player's queue.
                 withContext(Dispatchers.Main) {
                     Log.d("MusicPlayerService", "Adding '${song.trackName}' to the end of the queue.")
