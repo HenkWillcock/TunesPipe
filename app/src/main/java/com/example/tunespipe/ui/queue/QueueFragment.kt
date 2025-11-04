@@ -6,11 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.Player
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentQueueBinding
+import kotlinx.coroutines.launch
+import android.util.Log
 
 
 class QueueFragment : Fragment() {
@@ -40,55 +43,81 @@ class QueueFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
         }
 
-        // --- START OF NEW, CORRECTED LOGIC ---
-        // The player's state is the source of truth for the queue.
-        playerViewModel.playerState.observe(viewLifecycleOwner) { player ->
-            if (player == null) return@observe
-
-            val queueItems = mutableListOf<QueueItem>()
-            val nowPlayingSong = player.currentMediaItem?.mediaMetadata?.extras?.getParcelable<Song>("SONG_METADATA")
-
-            // 1. Add "Now Playing" item if a song is loaded
-            if (nowPlayingSong != null) {
-                queueItems.add(QueueItem.NowPlaying(nowPlayingSong))
-            }
-
-            // 2. Build the "Up Next" list from the rest of the player's timeline
-            val upNextSongs = mutableListOf<Song>()
-            if (player.mediaItemCount > 1) {
-                // Start from the item *after* the current one
-                for (i in player.currentMediaItemIndex + 1 until player.mediaItemCount) {
-                    val mediaItem = player.getMediaItemAt(i)
-                    val song = mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")
-                    if (song != null) {
-                        upNextSongs.add(song)
-                    }
-                }
-            }
-
-            if (upNextSongs.isNotEmpty()) {
-                queueItems.add(QueueItem.Header("Up Next"))
-                upNextSongs.forEach { queuedSong ->
-                    queueItems.add(QueueItem.QueuedSong(queuedSong))
-                }
-            }
-
-            // 3. Add the "Once Queue Empty" header and autoplay strategy
-            // We will add a placeholder for now and connect it to the service later
-            val strategyText = when {
-                player.shuffleModeEnabled -> "Shuffle"
-                player.repeatMode == Player.REPEAT_MODE_ALL -> "Repeat"
-                else -> "Play Once"
-            }
-            // TODO: We will replace this simple text with a proper AutoplayStrategy object later.
-            queueItems.add(QueueItem.Header("Once Queue Empty"))
-            // For now, let's just display the text directly. We'll need a new QueueItem or modify the existing one.
-            // As a temporary fix, let's just use the Header item to show it.
-            queueItems.add(QueueItem.Header("Autoplay: $strategyText"))
-
-
-            queueAdapter.updateItems(queueItems)
+        fun updateDisplay() {
+            val player = playerViewModel.playerState.value
+            val count = playerViewModel.manualQueueCount.value
+            updateQueueDisplay(player, count)
         }
+
+        // Observe the player state (the queue itself) for changes.
+        playerViewModel.playerState.observe(viewLifecycleOwner) {
+            updateDisplay()
+        }
+
+        // Observe the manual queue count for changes.
+        viewLifecycleOwner.lifecycleScope.launch {
+            playerViewModel.manualQueueCount.collect {
+                updateDisplay()
+            }
+        }
+    }
+
+    private fun updateQueueDisplay(player: Player?, manualQueueCount: Int) {
+        if (player == null || player.mediaItemCount == 0) {
+            queueAdapter.updateItems(emptyList())
+            return
+        }
+
+        val queueItems = mutableListOf<QueueItem>()
+        val nowPlayingSong = player.currentMediaItem?.mediaMetadata?.extras?.getParcelable<Song>("SONG_METADATA") as? Song
+
+        // 1. Add "Now Playing"
+        if (nowPlayingSong != null) {
+            queueItems.add(QueueItem.NowPlaying(nowPlayingSong))
+        }
+
+        val totalItems = player.mediaItemCount
+        val currentIndex = player.currentMediaItemIndex
+
+        // 2. Build the "Up Next" (Manually Queued) list
+        // The manually queued songs are the next [manualQueueCount] items after the current one.
+        val upNextStartIndex = currentIndex + 1
+        // The end index is exclusive, so we add the count to the start index.
+        val upNextEndIndex = upNextStartIndex + manualQueueCount
+
+        Log.d("QueueFragment", "############## !!!!!! manualQueueCount: $manualQueueCount")
+
+
+        if (manualQueueCount > 0 && upNextStartIndex < totalItems) {
+            queueItems.add(QueueItem.Header("Up Next"))
+            // Loop from the start of "Up Next" to the calculated end, but don't go past the end of the whole queue.
+            for (i in upNextStartIndex until minOf(upNextEndIndex, totalItems)) {
+                val mediaItem = player.getMediaItemAt(i)
+                (mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA") as? Song)?.let { song ->
+                    queueItems.add(QueueItem.QueuedSong(song))
+                }
+            }
+        }
+
+        val strategyText = when {
+            player.shuffleModeEnabled -> "Shuffle Playlist"
+            player.repeatMode == Player.REPEAT_MODE_ALL -> "Repeat Playlist"
+            else -> "Play Once"
+        }
+        queueItems.add(QueueItem.Header("Then, Autoplay: $strategyText"))
+
+        // The automatic songs start right after the manual ones.
+        val autoQueueStartIndex = upNextEndIndex
+        if (totalItems > autoQueueStartIndex) {
+            for (i in autoQueueStartIndex until totalItems) {
+                val mediaItem = player.getMediaItemAt(i)
+                (mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA") as? Song)?.let { song ->
+                    queueItems.add(QueueItem.QueuedSong(song))
+                }
+            }
+        }
+
+        queueAdapter.updateItems(queueItems)
     }
 
     override fun onDestroyView() {

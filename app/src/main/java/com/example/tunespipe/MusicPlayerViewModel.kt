@@ -39,6 +39,9 @@ class MusicPlayerViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
+    private val _manualQueueCount = MutableStateFlow(0)
+    val manualQueueCount = _manualQueueCount.asStateFlow()
+
     private val _playerState = MutableStateFlow<Player?>(null)
     val playerState: LiveData<Player?> = _playerState.asLiveData()
 
@@ -138,7 +141,9 @@ class MusicPlayerViewModel : ViewModel() {
             command: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            // This can be simplified or removed later as we rely less on custom commands
+            if (command.customAction == "QUEUE_STATE_UPDATE") {
+                _manualQueueCount.value = args.getInt("MANUAL_QUEUE_COUNT", 0)
+            }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
     }

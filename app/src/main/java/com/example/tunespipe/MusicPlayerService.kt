@@ -33,6 +33,7 @@ class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private lateinit var player: ExoPlayer
     private var queuePopulationJob: Job? = null
+    private var numberOfManuallyQueuedSongs = 0
 
     // TODO still just have a string for the autoplay strategy.
     //  To show on the "After Queue Empty" header.
@@ -52,6 +53,7 @@ class MusicPlayerService : MediaSessionService() {
             availableSessionCommands.add(SessionCommand("PLAY_SONG", Bundle.EMPTY))
             availableSessionCommands.add(SessionCommand("PLAY_NEXT", Bundle.EMPTY))
             availableSessionCommands.add(SessionCommand("ADD_TO_QUEUE", Bundle.EMPTY))
+            availableSessionCommands.add(SessionCommand("GET_QUEUE_STATE", Bundle.EMPTY))
             return MediaSession.ConnectionResult.accept(
                 availableSessionCommands.build(),
                 connectionResult.availablePlayerCommands
@@ -120,13 +122,30 @@ class MusicPlayerService : MediaSessionService() {
 
                         // 4. Update the player on the main thread to play this one song.
                         withContext(Dispatchers.Main) {
+                            // --- START OF NEW LOGIC ---
+                            // Instead of clearing everything, we'll remove only the old auto-queued songs.
+                            // The manually queued songs are at indices [currentIndex + 1] to [currentIndex + numberOfManuallyQueuedSongs].
+                            // The auto-queued songs are everything after that.
+                            val currentIndex = player.currentMediaItemIndex
+                            val totalItems = player.mediaItemCount
+                            val autoQueueStartIndex = currentIndex + 1 + numberOfManuallyQueuedSongs
+
+                            // Remove items from the end to avoid index shifting issues.
+                            if (autoQueueStartIndex < totalItems) {
+                                player.removeMediaItems(autoQueueStartIndex, totalItems)
+                                Log.d("MusicPlayerService", "Removed old auto-queued songs.")
+                            }
+
+                            // Now, add the new song to the end of the manual queue
+                            val insertionPoint = currentIndex + 1 + numberOfManuallyQueuedSongs
+                            player.addMediaItem(insertionPoint, resolvedFirstMediaItem)
+
+                            // Set player modes for the new content
                             player.shuffleModeEnabled = shuffle
-                            player.repeatMode =
-                                if (repeat) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                            player.repeatMode = if (repeat) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
 
-                            player.clearMediaItems()
-                            player.setMediaItem(resolvedFirstMediaItem) // Use setMediaItem for a single song
-
+                            // JUMP to the newly added song and play it.
+                            player.seekTo(insertionPoint, 0)
                             player.prepare()
                             player.play()
 
@@ -148,12 +167,13 @@ class MusicPlayerService : MediaSessionService() {
                                     // Add the song right after the current one
                                     val currentIndex = player.currentMediaItemIndex
                                     player.addMediaItem(currentIndex + 1, mediaItem)
+                                    numberOfManuallyQueuedSongs++
+                                    broadcastQueueState()
                                 }
                             }
                         }
                     }
                 }
-
                 "ADD_TO_QUEUE" -> {
                     val song = args.getParcelable<Song>("SONG")
                     if (song != null) {
@@ -161,12 +181,21 @@ class MusicPlayerService : MediaSessionService() {
                             val mediaItem = createMediaItemFromSong(song)
                             if (mediaItem != null) {
                                 withContext(Dispatchers.Main) {
-                                    // Add the song to the very end of the queue
-                                    player.addMediaItem(mediaItem)
+                                    val currentIndex = player.currentMediaItemIndex
+                                    val insertionPoint = currentIndex + 1 + numberOfManuallyQueuedSongs
+                                    player.addMediaItem(insertionPoint, mediaItem)
+                                    numberOfManuallyQueuedSongs++
+                                    broadcastQueueState()
                                 }
                             }
                         }
                     }
+                }
+                "GET_QUEUE_STATE" -> {
+                    val resultBundle = Bundle().apply {
+                        putInt("MANUAL_QUEUE_COUNT", numberOfManuallyQueuedSongs)
+                    }
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS, resultBundle))
                 }
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
@@ -197,6 +226,14 @@ class MusicPlayerService : MediaSessionService() {
         }
     }
 
+    private fun broadcastQueueState() {
+        val command = SessionCommand("QUEUE_STATE_UPDATE", Bundle.EMPTY)
+        val args = Bundle().apply {
+            putInt("MANUAL_QUEUE_COUNT", numberOfManuallyQueuedSongs)
+        }
+        mediaSession?.broadcastCustomCommand(command, args)
+    }
+
     override fun onCreate() {
         super.onCreate()
         player = ExoPlayer.Builder(this).build()
@@ -206,6 +243,27 @@ class MusicPlayerService : MediaSessionService() {
             .build()
 
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
+
+        player.addListener(object : Player.Listener {
+            // Keep track of the last known index. Initialize with the player's current index.
+            private var previousMediaItemIndex: Int = player.currentMediaItemIndex
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val newIndex = player.currentMediaItemIndex
+
+                // A song is "consumed" if we move forward to the next adjacent track.
+                // This covers both auto-transitions and manual skips forward.
+                if (newIndex == previousMediaItemIndex + 1) {
+                    if (numberOfManuallyQueuedSongs > 0) {
+                        numberOfManuallyQueuedSongs--
+                        broadcastQueueState()
+                        Log.d("MusicPlayerService", "Consumed a manual song. Count is now: $numberOfManuallyQueuedSongs")
+                    }
+                }
+                // Always update the previous index to the new current one.
+                previousMediaItemIndex = newIndex
+            }
+        })
     }
 
     private suspend fun resolveAndAddRemainingSongs(songs: List<Song>, alreadyAddedIndex: Int) {
