@@ -17,6 +17,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +32,7 @@ class MusicPlayerService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
     private lateinit var player: ExoPlayer
+    private var queuePopulationJob: Job? = null
 
     // TODO still just have a string for the autoplay strategy.
     //  To show on the "After Queue Empty" header.
@@ -75,6 +77,9 @@ class MusicPlayerService : MediaSessionService() {
 
                     // --- START OF NEW LOGIC ---
                     serviceScope.launch {
+                        queuePopulationJob?.cancel()
+                        Log.d("MusicPlayerService", "Previous queue population task cancelled.")
+
                         // 1. Get the song we need to play right now.
                         val firstSong = songsToPlay[startIndex]
 
@@ -123,7 +128,7 @@ class MusicPlayerService : MediaSessionService() {
                             player.play()
 
                             // 5. Fire-and-forget a background task to add the rest of the songs.
-                            launch {
+                            queuePopulationJob = launch {
                                 // We pass the full list and the index of the song we already added.
                                 resolveAndAddRemainingSongs(songsToPlay, startIndex)
                             }
