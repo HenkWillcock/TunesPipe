@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -37,6 +38,9 @@ class MusicPlayerViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+
+    private val _playerState = MutableStateFlow<Player?>(null)
+    val playerState: LiveData<Player?> = _playerState.asLiveData()
 
     fun playSong(songs: List<Song>, startIndex: Int, shuffle: Boolean, repeat: Boolean) {
         if (browser == null || songs.isEmpty()) return
@@ -100,6 +104,7 @@ class MusicPlayerViewModel : ViewModel() {
                     .buildAsync()
                 browser = browserFuture.await()
                 browser?.addListener(PlayerStateListener())
+                _playerState.value = browser // Expose the initial state
                 _nowPlaying.value = browser?.currentMediaItem?.mediaMetadata?.extras?.getParcelable("SONG_METADATA")
             }
         }
@@ -139,6 +144,15 @@ class MusicPlayerViewModel : ViewModel() {
     }
 
     private inner class PlayerStateListener : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) {
+            // --- START OF NEW PROPERTY ---
+            // Whenever the timeline or media item changes, update the player state
+            if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                _playerState.value = player
+            }
+            // --- END OF NEW PROPERTY ---
+        }
+
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             _isLoading.value = false
             _nowPlaying.value = mediaItem?.mediaMetadata?.extras?.getParcelable("SONG_METADATA")

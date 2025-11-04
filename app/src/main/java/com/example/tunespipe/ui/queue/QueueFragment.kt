@@ -6,12 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.Player
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
+import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentQueueBinding
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
+
 
 class QueueFragment : Fragment() {
 
@@ -33,46 +33,61 @@ class QueueFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Pass the playerViewModel to the adapter's constructor
         queueAdapter = QueueAdapter(emptyList())
         binding.queueRecyclerView.apply {
             adapter = queueAdapter
             layoutManager = LinearLayoutManager(context)
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            playerViewModel.nowPlaying
-                .combine(playerViewModel.queue) { song, queue ->
-                    Pair(song, queue)
-                }
-                .combine(playerViewModel.strategy) { (song, queue), strategy ->
-                    Triple(song, queue, strategy)
-                }
-                .collect { (song, queue, strategy) ->
+        // --- START OF NEW, CORRECTED LOGIC ---
+        // The player's state is the source of truth for the queue.
+        playerViewModel.playerState.observe(viewLifecycleOwner) { player ->
+            if (player == null) return@observe
 
-                    val queueItems = mutableListOf<QueueItem>()
+            val queueItems = mutableListOf<QueueItem>()
+            val nowPlayingSong = player.currentMediaItem?.mediaMetadata?.extras?.getParcelable<Song>("SONG_METADATA")
 
-                    // 1. Add "Now Playing" if it exists
+            // 1. Add "Now Playing" item if a song is loaded
+            if (nowPlayingSong != null) {
+                queueItems.add(QueueItem.NowPlaying(nowPlayingSong))
+            }
+
+            // 2. Build the "Up Next" list from the rest of the player's timeline
+            val upNextSongs = mutableListOf<Song>()
+            if (player.mediaItemCount > 1) {
+                // Start from the item *after* the current one
+                for (i in player.currentMediaItemIndex + 1 until player.mediaItemCount) {
+                    val mediaItem = player.getMediaItemAt(i)
+                    val song = mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")
                     if (song != null) {
-                        queueItems.add(QueueItem.NowPlaying(song))
+                        upNextSongs.add(song)
                     }
-
-                    // 2. Add "Up Next" header and queued songs if the queue is not empty
-                    if (queue.isNotEmpty()) {
-                        queueItems.add(QueueItem.Header("Up Next"))
-                        queue.forEach { queuedSong ->
-                            queueItems.add(QueueItem.QueuedSong(queuedSong))
-                        }
-                    }
-
-                    // 3. Add the "Once Queue Empty" header and autoplay strategy if it exists
-                    if (strategy != null) {
-                        // This header appears whether the queue is empty or not, acting as a separator
-                        queueItems.add(QueueItem.Header("Once Queue Empty"))
-                        queueItems.add(QueueItem.Autoplay(strategy))
-                    }
-
-                    queueAdapter.updateItems(queueItems)
                 }
+            }
+
+            if (upNextSongs.isNotEmpty()) {
+                queueItems.add(QueueItem.Header("Up Next"))
+                upNextSongs.forEach { queuedSong ->
+                    queueItems.add(QueueItem.QueuedSong(queuedSong))
+                }
+            }
+
+            // 3. Add the "Once Queue Empty" header and autoplay strategy
+            // We will add a placeholder for now and connect it to the service later
+            val strategyText = when {
+                player.shuffleModeEnabled -> "Shuffle"
+                player.repeatMode == Player.REPEAT_MODE_ALL -> "Repeat"
+                else -> "Play Once"
+            }
+            // TODO: We will replace this simple text with a proper AutoplayStrategy object later.
+            queueItems.add(QueueItem.Header("Once Queue Empty"))
+            // For now, let's just display the text directly. We'll need a new QueueItem or modify the existing one.
+            // As a temporary fix, let's just use the Header item to show it.
+            queueItems.add(QueueItem.Header("Autoplay: $strategyText"))
+
+
+            queueAdapter.updateItems(queueItems)
         }
     }
 

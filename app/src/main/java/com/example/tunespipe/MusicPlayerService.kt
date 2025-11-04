@@ -66,6 +66,7 @@ class MusicPlayerService : MediaSessionService() {
                 "PLAY_SONG" -> {
                     // Get the list of songs and the starting index from the ViewModel
                     val songsToPlay = args.getParcelableArrayList<Song>("SONGS_TO_PLAY")
+                    val startIndex = args.getInt("START_INDEX", 0)
                     val shuffle = args.getBoolean("SHUFFLE", false)
                     val repeat = args.getBoolean("REPEAT", false)
 
@@ -127,9 +128,10 @@ class MusicPlayerService : MediaSessionService() {
         }
     }
 
-    private suspend fun createMediaItemFromSong(song: Song): MediaItem? {
+    private suspend fun createMediaItemFromSong(song: Song): MediaItem? = withContext(Dispatchers.IO) {
+        // Now this block runs on a background thread
         val mediaUri = findBestAudioStreamUrl(song)
-        return if (mediaUri != null) {
+        if (mediaUri != null) {
             MediaItem.Builder()
                 .setUri(mediaUri)
                 .setMediaMetadata(
