@@ -1,5 +1,6 @@
 package com.example.tunespipe
 
+import android.content.Intent // Make sure this import is present
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
@@ -32,9 +33,11 @@ class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private lateinit var player: ExoPlayer
 
-    private var autoplayStrategy: AutoplayStrategy = AutoplayStrategy.RepeatOne
-    private var currentSong: Song? = null
-    private var songQueue: MutableList<Song> = mutableListOf()
+    // --- REFACTOR: These are no longer needed. The player is the source of truth. ---
+    // private var autoplayStrategy: AutoplayStrategy = AutoplayStrategy.RepeatOne
+    // private var currentSong: Song? = null
+    // private var songQueue: MutableList<Song> = mutableListOf()
+    // ---
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
@@ -46,8 +49,8 @@ class MusicPlayerService : MediaSessionService() {
         ): MediaSession.ConnectionResult {
             val connectionResult = super.onConnect(session, controller)
             val availableSessionCommands = connectionResult.availableSessionCommands.buildUpon()
-            availableSessionCommands.add(SessionCommand("PLAY_SONG", Bundle.EMPTY))
-            availableSessionCommands.add(SessionCommand("UPDATE_QUEUE", Bundle.EMPTY))
+            // --- REFACTOR: New custom command ---
+            availableSessionCommands.add(SessionCommand("SET_PLAYLIST", Bundle.EMPTY))
             return MediaSession.ConnectionResult.accept(
                 availableSessionCommands.build(),
                 connectionResult.availablePlayerCommands
@@ -61,21 +64,14 @@ class MusicPlayerService : MediaSessionService() {
             args: Bundle,
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
-                "UPDATE_QUEUE" -> {
-                    val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
-                    if (queueSongs != null) {
-                        this@MusicPlayerService.songQueue = queueSongs.toMutableList()
-                    }
-                }
-                "PLAY_SONG" -> {
-                    val song = args.getParcelable<Song>("SONG_TO_PLAY")
-                    val strategy = args.getParcelable<AutoplayStrategy>("AUTOPLAY_STRATEGY")
-                    val queueSongs = args.getParcelableArrayList<Song>("QUEUE_SONGS")
-                    if (song != null && strategy != null) {
-                        // The queue is now set just before playing.
-                        this@MusicPlayerService.songQueue = queueSongs?.toMutableList() ?: mutableListOf()
-                        this@MusicPlayerService.autoplayStrategy = strategy
-                        serviceScope.launch { playSongInternal(song) } // No longer passing queue here
+                // --- REFACTOR: Handle the new playlist command ---
+                "SET_PLAYLIST" -> {
+                    val songs = args.getParcelableArrayList<Song>("SONGS")
+                    val startIndex = args.getInt("START_INDEX", 0)
+                    val shuffle = args.getBoolean("SHUFFLE", false)
+
+                    if (songs != null) {
+                        serviceScope.launch { setPlaylistAndPlay(songs, startIndex, shuffle) }
                     }
                 }
             }
@@ -84,60 +80,29 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_ENDED) {
-                playNextSong()
-            }
-        }
-    }
+        // --- REFACTOR: This is the new core of our lazy-loading logic ---
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (mediaItem == null) return
 
-    private fun playNextSong() {
-        // 1. Prioritize the user's explicit queue.
-        if (songQueue.isNotEmpty()) {
-            val nextSong = songQueue.removeAt(0)
-
-            // Tell the ViewModel to update its UI state for the queue.
-            mediaSession?.broadcastCustomCommand(SessionCommand("UPDATE_QUEUE", Bundle.EMPTY), Bundle().apply {
-                putParcelableArrayList("QUEUE_SONGS", ArrayList(songQueue))
-            })
-
-            serviceScope.launch { playSongInternal(nextSong) }
-            return
-        }
-
-        // 2. If queue is empty, use the autoplay strategy.
-        when (val strategy = autoplayStrategy) {
-            is AutoplayStrategy.RepeatOne -> {
-                player.seekTo(0)
-                player.playWhenReady = true
-            }
-            is AutoplayStrategy.ShufflePlaylist -> {
-                val allPlaylistSongs = strategy.playlistWithSongs.songs
-                val candidateSongs = if (!NetworkUtils.isOnline(this@MusicPlayerService)) {
-                    Log.d("MusicPlayerService", "Offline Shuffle: Filtering for downloaded songs only.")
-                    allPlaylistSongs.filter { song ->
-                        DownloadManager.getSongFile(this@MusicPlayerService, song).exists()
-                    }
-                } else {
-                    allPlaylistSongs
-                }
-                val nextSong = candidateSongs.filter { it != currentSong }.randomOrNull()
-
-                if (nextSong != null) {
-                    Log.d("MusicPlayerService", "Shuffle: Playing next song '${nextSong.trackName}'")
-                    serviceScope.launch { playSongInternal(nextSong) }
-                } else {
-                    Log.d("MusicPlayerService", "Shuffle: No other suitable song found to play.")
+            // If the item doesn't have a real URI, it's a placeholder we need to resolve.
+            if (mediaItem.localConfiguration?.uri == null) {
+                val song = mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")
+                if (song != null) {
+                    Log.d("MusicPlayerService", "Transition to unresolved song: ${song.trackName}")
+                    serviceScope.launch { resolveAndPlay(song, player.currentMediaItemIndex) }
                 }
             }
         }
     }
+
+    // --- REFACTOR: playNextSong() is now deleted. ---
 
     override fun onCreate() {
         super.onCreate()
         player = ExoPlayer.Builder(this).build()
         player.addListener(playerListener)
 
+        // --- REFACTOR: No ForwardingPlayer needed. Just the real player. ---
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(sessionCallback)
             .build()
@@ -145,44 +110,60 @@ class MusicPlayerService : MediaSessionService() {
         setMediaNotificationProvider(DefaultMediaNotificationProvider(this))
     }
 
-    private suspend fun playSongInternal(song: Song) {
-        currentSong = song
+    private suspend fun setPlaylistAndPlay(songs: List<Song>, startIndex: Int, shuffle: Boolean) {
+        val mediaItems = songs.map { song ->
+            val metadata = MediaMetadata.Builder()
+                .setTitle(song.trackName)
+                .setArtist(song.artistName)
+                .setArtworkUri(android.net.Uri.parse(song.artworkUrl))
+                .setExtras(Bundle().apply { putParcelable("SONG_METADATA", song) })
+                .build()
 
-        val localFile = DownloadManager.getSongFile(this, song)
-        val mediaUri: String?
-
-        if (localFile.exists()) {
-            Log.d("TunesPipe", "Playing from local file: ${localFile.absolutePath}")
-            mediaUri = localFile.toURI().toString()
-        } else {
-            Log.d("TunesPipe", "Local file not found. Streaming from YouTube.")
-            mediaUri = withContext(Dispatchers.IO) { findBestAudioStreamUrl(song) }
+            MediaItem.Builder()
+                .setMediaId(song.trackId)
+                .setMediaMetadata(metadata)
+                .build()
         }
 
-        withContext(Dispatchers.Main) {
-            if (mediaUri != null) {
-                val metadata = MediaMetadata.Builder()
-                    .setTitle(song.trackName)
-                    .setArtist(song.artistName)
-                    .setArtworkUri(android.net.Uri.parse(song.artworkUrl))
-                    .setExtras(Bundle().apply { putParcelable("SONG_METADATA", song) })
-                    .build()
+        player.shuffleModeEnabled = shuffle
+        player.setMediaItems(mediaItems, startIndex, 0)
+        player.prepare()
+        player.play()
+    }
 
-                val mediaItem = MediaItem.Builder()
-                    .setUri(mediaUri)
-                    .setMediaMetadata(metadata)
-                    .build()
+    private suspend fun resolveAndPlay(song: Song, windowIndex: Int) {
+        val playableUri = findPlayableUri(song)
 
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                player.play()
-            } else {
-                Log.e("TunesPipe", "Could not find a playable URI for ${song.trackName}. Cannot play.")
-            }
+        if (playableUri != null) {
+            val originalMediaItem = player.getMediaItemAt(windowIndex)
+            val newMediaItem = originalMediaItem.buildUpon().setUri(playableUri).build()
+
+            // Replace the placeholder item with the real, resolved one.
+            player.removeMediaItem(windowIndex)
+            player.addMediaItem(windowIndex, newMediaItem)
+            // The player automatically continues, but we ensure play state just in case.
+            player.play()
+        } else {
+            Log.e("MusicPlayerService", "Could not resolve URI for ${song.trackName}. Skipping.")
+            // Just remove the item, the player will automatically move to the next one.
+            player.removeMediaItem(windowIndex)
         }
     }
 
+    private suspend fun findPlayableUri(song: Song): String? {
+        val localFile = DownloadManager.getSongFile(this, song)
+        return if (localFile.exists()) {
+            Log.d("MusicPlayerService", "Playing from local file: ${localFile.absolutePath}")
+            localFile.toURI().toString()
+        } else {
+            Log.d("MusicPlayerService", "Local file not found. Streaming from YouTube.")
+            withContext(Dispatchers.IO) { findBestAudioStreamUrl(song) }
+        }
+    }
+
+    // --- REFACTOR: The old `playSongInternal` is GONE. `findBestAudioStreamUrl` remains unchanged. ---
     private fun findBestAudioStreamUrl(song: Song): String? {
+        // ... this function's content is exactly the same as before ...
         val searchQuery = "${song.artistName} - ${song.trackName}"
         Log.d("TunesPipe", "############# Starting YouTube search for: $searchQuery")
         val youtubeService = NewPipe.getService(0)
@@ -196,7 +177,6 @@ class MusicPlayerService : MediaSessionService() {
 
         Log.d("TunesPipe", "############# Checking top ${itemsToCheck.size} results for duration: $itunesDurationSeconds, explicit: ${song.isExplicit}")
 
-        // 2. Filter by song length (within 2 seconds), but only if it doesn't filter out everything.
         val durationFiltered = itemsToCheck.filter { abs(it.duration - itunesDurationSeconds) <= 2 }
         val candidates = if (durationFiltered.isNotEmpty()) {
             Log.d("TunesPipe", "############# Using duration-filtered list of ${durationFiltered.size} items.")
@@ -206,7 +186,6 @@ class MusicPlayerService : MediaSessionService() {
             itemsToCheck
         }
 
-        // 3. Score candidates based on priority words.
         val priorityWords = listOf("lyric", "remaster")
         val explicitWord = "explicit"
 
@@ -215,18 +194,15 @@ class MusicPlayerService : MediaSessionService() {
             val title = item.name.lowercase()
 
             if (priorityWords.any { title.contains(it) }) {
-                score += 10  // Lyrics or remasters are usually solid.
+                score += 10
             }
             if (song.isExplicit && title.contains(explicitWord)) {
-                score += 100  // Getting one explicit is super important. Cleaned are unlistenable.
+                score += 100
             }
 
             Log.d("TunesPipe", "############# Scoring '${item.name}'. Final Score: $score")
             score
         }
-
-        // After scoring, we just need the best match. The position in the original list acts
-        // as the tie-breaker because maxByOrNull returns the *first* element with the max value.
 
         return if (bestMatch != null) {
             Log.d("TunesPipe", "############# Best match chosen: '${bestMatch.name}' with duration ${bestMatch.duration}s.")
@@ -234,7 +210,6 @@ class MusicPlayerService : MediaSessionService() {
             streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
         } else {
             Log.d("TunesPipe", "############# No suitable match found after checking all candidates.")
-            // Fallback to the closest duration if all scoring fails (though this is unlikely)
             itemsToCheck.minByOrNull { abs(it.duration - itunesDurationSeconds) }?.let { fallbackMatch ->
                 Log.d("TunesPipe", "############# Falling back to closest duration: '${fallbackMatch.name}'")
                 val streamInfo = StreamInfo.getInfo(youtubeService, fallbackMatch.url)
@@ -242,6 +217,7 @@ class MusicPlayerService : MediaSessionService() {
             }
         }
     }
+
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 

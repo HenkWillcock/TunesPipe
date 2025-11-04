@@ -1,5 +1,6 @@
 package com.example.tunespipe.ui.queue
 
+import android.media.session.MediaSession.QueueItem
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView

@@ -6,10 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope // Import lifecycleScope
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
-import com.example.tunespipe.AutoplayStrategy
 import com.example.tunespipe.MusicPlayerViewModel
 import com.example.tunespipe.R
 import com.example.tunespipe.Song
@@ -21,7 +20,7 @@ import com.example.tunespipe.ui.playlists.PlaylistsViewModel
 import com.example.tunespipe.ui.playlists.PlaylistsViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
-import kotlinx.coroutines.launch // Import launch
+import kotlinx.coroutines.launch
 
 @UnstableApi
 class SongActionsDialogFragment : BottomSheetDialogFragment() {
@@ -60,16 +59,25 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
             .placeholder(R.drawable.ic_launcher_foreground)
             .into(binding.artworkImage)
 
+        // --- REFACTOR: Update all button click listeners ---
         binding.playNowButton.setOnClickListener {
             dismiss()
-            val strategy = if (parentFragment is PlaylistDetailFragment) {
-                val playlistFragment = parentFragment as PlaylistDetailFragment
-                val playlistWithSongs = playlistFragment.viewModel.playlistWithSongs.value!!
-                AutoplayStrategy.ShufflePlaylist(playlistWithSongs)
-            } else {
-                AutoplayStrategy.RepeatOne
+            // Determine the playlist context
+            val parent = parentFragment
+            when {
+                // Case 1: We are in a playlist detail view
+                parent is PlaylistDetailFragment -> {
+                    val playlistSongs = parent.viewModel.playlistWithSongs.value?.songs ?: listOf(song)
+                    val startIndex = playlistSongs.indexOf(song).coerceAtLeast(0)
+                    // Play the song within the context of the playlist, with shuffle enabled
+                    playerViewModel.playSongFromPlaylist(playlistSongs, startIndex, shuffle = true)
+                }
+                // Case 2: We are in search results or elsewhere
+                else -> {
+                    // Play just this single song, with no shuffle
+                    playerViewModel.playSongFromPlaylist(listOf(song), 0, shuffle = false)
+                }
             }
-            playerViewModel.playSong(song, strategy)
         }
 
         binding.playNextButton.setOnClickListener {
@@ -78,19 +86,16 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         }
 
         binding.addToQueueButton.setOnClickListener {
-            playerViewModel.addSongToQueue(song)
+            playerViewModel.addToQueue(song)
             dismiss()
         }
+        // --- END OF REFACTOR ---
 
         playlistsViewModel.allPlaylists.observe(viewLifecycleOwner) { playlists ->
             binding.playlistButtonsContainer.removeAllViews()
-            // --- START OF MODIFIED LOGIC ---
-            // Use lifecycleScope to call suspend functions
             lifecycleScope.launch {
                 playlists.forEach { playlist ->
-                    // Check if the song is already in this playlist
                     val songIsInPlaylist = playlistsViewModel.isSongInPlaylist(song.trackId, playlist.id)
-                    // Create the appropriate button
                     addPlaylistButton(playlist, songIsInPlaylist)
                 }
             }
@@ -105,16 +110,13 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
         ).apply {
             if (songIsInPlaylist) {
                 text = "Remove from ${playlist.name}"
-                // Set icon for remove action
                 setIconResource(R.drawable.ic_remove_24)
                 setOnClickListener {
                     playlistsViewModel.removeSongFromPlaylist(song.trackId, playlist.id)
-                    // Refresh the dialog or dismiss it
                     dismiss()
                 }
             } else {
                 text = "Add to ${playlist.name}"
-                // Set icon for add action
                 setIconResource(R.drawable.ic_add_24)
                 setOnClickListener {
                     playlistsViewModel.addSongToPlaylist(song, playlist.id)
