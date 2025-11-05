@@ -60,8 +60,14 @@ class QueueFragment : Fragment() {
                 updateDisplay()
             }
         }
-    }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            playerViewModel.refreshSignal.collect {
+                // When the signal is received, it's our cue to redraw the UI.
+                updateDisplay()
+            }
+        }
+    }
     private fun updateQueueDisplay(player: Player?, manualQueueCount: Int) {
         if (player == null || player.mediaItemCount == 0) {
             queueAdapter.updateItems(emptyList())

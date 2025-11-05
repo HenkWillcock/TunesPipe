@@ -3,6 +3,7 @@ package com.example.tunespipe
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -20,7 +21,9 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -41,6 +44,11 @@ class MusicPlayerViewModel : ViewModel() {
 
     private val _manualQueueCount = MutableStateFlow(0)
     val manualQueueCount = _manualQueueCount.asStateFlow()
+
+    private val _refreshSignal = MutableSharedFlow<Unit>()
+    val refreshSignal = _refreshSignal.asSharedFlow()
+
+    private var refreshDebounceJob: Job? = null
 
     private val _playerState = MutableStateFlow<Player?>(null)
     val playerState: LiveData<Player?> = _playerState.asLiveData()
@@ -149,16 +157,29 @@ class MusicPlayerViewModel : ViewModel() {
     }
 
     private inner class PlayerStateListener : Player.Listener {
-        override fun onEvents(player: Player, events: Player.Events) {
-            // --- START OF NEW PROPERTY ---
-            // Whenever the timeline or media item changes, update the player state
-            if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
-                _playerState.value = player
+
+        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+            refreshDebounceJob?.cancel()
+            // Start a new job that will emit the refresh signal after a short delay.
+            // If another onTimelineChanged event comes in quickly, this job will be
+            // cancelled and a new one will start, effectively "debouncing" the signal.
+            refreshDebounceJob = viewModelScope.launch {
+                delay(1000) // Wait for 250ms of inactivity before refreshing.
+                Log.d("PlayerStateListener", "*******************************************")
+                Log.d("PlayerStateListener", "*******************************************")
+                Log.d("PlayerStateListener", "*******************************************")
+                Log.d("PlayerStateListener", "*******************************************")
+                Log.d("PlayerStateListener", "*******************************************")
+                Log.d("PlayerStateListener", "onTimelineChanged called with reason: $reason")
+                _refreshSignal.emit(Unit)
+                Log.d("PlayerStateListener", "Debounced timeline change. Emitting refresh signal.")
             }
-            // --- END OF NEW PROPERTY ---
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            viewModelScope.launch {
+                _refreshSignal.emit(Unit)
+            }
             _isLoading.value = false
             _nowPlaying.value = mediaItem?.mediaMetadata?.extras?.getParcelable("SONG_METADATA")
         }
