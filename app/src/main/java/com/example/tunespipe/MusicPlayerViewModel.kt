@@ -160,17 +160,8 @@ class MusicPlayerViewModel : ViewModel() {
 
         override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
             refreshDebounceJob?.cancel()
-            // Start a new job that will emit the refresh signal after a short delay.
-            // If another onTimelineChanged event comes in quickly, this job will be
-            // cancelled and a new one will start, effectively "debouncing" the signal.
             refreshDebounceJob = viewModelScope.launch {
-                delay(1000) // Wait for 250ms of inactivity before refreshing.
-                Log.d("PlayerStateListener", "*******************************************")
-                Log.d("PlayerStateListener", "*******************************************")
-                Log.d("PlayerStateListener", "*******************************************")
-                Log.d("PlayerStateListener", "*******************************************")
-                Log.d("PlayerStateListener", "*******************************************")
-                Log.d("PlayerStateListener", "onTimelineChanged called with reason: $reason")
+                delay(250)
                 _refreshSignal.emit(Unit)
                 Log.d("PlayerStateListener", "Debounced timeline change. Emitting refresh signal.")
             }
