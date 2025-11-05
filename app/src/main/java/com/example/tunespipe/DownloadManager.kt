@@ -95,6 +95,12 @@ object DownloadManager {
             return localFile.toURI().toString()
         }
 
+        if (!NetworkUtils.isOnline(context)) {
+            // We are offline AND the song is not downloaded. We cannot play it.
+            Log.w("DownloadManager", "Offline and no local file for '${song.trackName}'. Skipping.")
+            return null
+        }
+
         val searchQuery = "${song.artistName} - ${song.trackName}"
         val youtubeService = NewPipe.getService(0)
         val searchInfo = SearchInfo.getInfo(
