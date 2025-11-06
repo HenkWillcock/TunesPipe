@@ -100,7 +100,7 @@ class QueueFragment : Fragment() {
             for (i in upNextStartIndex until minOf(upNextEndIndex, totalItems)) {
                 val mediaItem = player.getMediaItemAt(i)
                 mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")?.let { song ->
-                    queueItems.add(QueueItem.QueuedSong(song))
+                    queueItems.add(QueueItem.QueuedSong(song, isAutoQueued = false))
                 }
             }
         }
@@ -110,7 +110,7 @@ class QueueFragment : Fragment() {
             for (i in upNextEndIndex until totalItems) {
                 val mediaItem = player.getMediaItemAt(i)
                 mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")?.let { song ->
-                    queueItems.add(QueueItem.QueuedSong(song))
+                    queueItems.add(QueueItem.QueuedSong(song, isAutoQueued = true))
                 }
             }
         }

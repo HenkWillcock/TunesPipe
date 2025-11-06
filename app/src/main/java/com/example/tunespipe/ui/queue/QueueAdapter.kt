@@ -2,6 +2,7 @@ package com.example.tunespipe.ui.queue
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.graphics.alpha
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tunespipe.AutoplayStrategy
@@ -83,7 +84,6 @@ class QueueAdapter(
                     .placeholder(R.drawable.ic_launcher_foreground)
                     .into(nowPlayingHolder.binding.artworkImage)
             }
-            // --- START OF CHANGE: Bind data to the ItemSongResultBinding ---
             is QueueItem.QueuedSong -> {
                 val queuedHolder = holder as QueuedSongViewHolder
                 val song = currentItem.song
@@ -94,7 +94,14 @@ class QueueAdapter(
                     .placeholder(R.drawable.ic_launcher_foreground)
                     .into(queuedHolder.binding.artworkImage)
 
-                // You can add click listeners or other logic here later
+                if (currentItem.isAutoQueued) {
+                    // Apply the greyed-out effect
+                    queuedHolder.itemView.alpha = 0.5f
+                } else {
+                    // Ensure manually queued songs are fully opaque
+                    queuedHolder.itemView.alpha = 1.0f
+                }
+
             }
             is QueueItem.Autoplay -> {
                 val autoplayHolder = holder as AutoplayViewHolder
