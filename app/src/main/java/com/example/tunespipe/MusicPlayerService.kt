@@ -34,12 +34,6 @@ class MusicPlayerService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private var queuePopulationJob: Job? = null
     private var numberOfManuallyQueuedSongs = 0
-
-    // TODO still just have a string for the autoplay strategy.
-    //  To show on the "After Queue Empty" header.
-    //  Set it with this@MusicPlayerService.autoplayStrategy = strategy
-    //  In the same places we used to.
-
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
 
@@ -133,8 +127,7 @@ class MusicPlayerService : MediaSessionService() {
                                 Log.d("MusicPlayerService", "Removed old auto-queued songs.")
                             }
 
-                            // Now, add the new song to the end of the manual queue
-                            val insertionPoint = currentIndex + 1 + numberOfManuallyQueuedSongs
+                            val insertionPoint = currentIndex + 1
                             player.addMediaItem(insertionPoint, resolvedFirstMediaItem)
 
                             // Set player modes for the new content
@@ -145,6 +138,10 @@ class MusicPlayerService : MediaSessionService() {
                             player.seekTo(insertionPoint, 0)
                             player.prepare()
                             player.play()
+
+                            // Counteract the automatic decrementing of this value
+                            // triggered by onMediaItemTransition() because of the new song.
+                            numberOfManuallyQueuedSongs++
 
                             // 5. Fire-and-forget a background task to add the rest of the songs.
                             queuePopulationJob = launch {
