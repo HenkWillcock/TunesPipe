@@ -70,14 +70,11 @@ class MusicPlayerService : MediaSessionService() {
                 "PLAY_SONG" -> {
                     val songsToPlay = args.getParcelableArrayList<Song>("SONGS_TO_PLAY")
                     val startIndex = args.getInt("START_INDEX", 0)
-                    val shuffle = args.getBoolean("SHUFFLE", false)
-                    val repeat = args.getBoolean("REPEAT", false)
 
                     if (songsToPlay.isNullOrEmpty()) {
-                        return@onCustomCommand Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                     }
 
-                    // --- START OF NEW LOGIC ---
                     serviceScope.launch {
                         queuePopulationJob?.cancel()
                         Log.d("MusicPlayerService", "Previous queue population task cancelled.")
@@ -141,8 +138,8 @@ class MusicPlayerService : MediaSessionService() {
                             player.addMediaItem(insertionPoint, resolvedFirstMediaItem)
 
                             // Set player modes for the new content
-                            player.shuffleModeEnabled = shuffle
-                            player.repeatMode = if (repeat) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                            player.shuffleModeEnabled = false
+                            player.repeatMode = Player.REPEAT_MODE_OFF
 
                             // JUMP to the newly added song and play it.
                             player.seekTo(insertionPoint, 0)

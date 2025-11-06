@@ -62,8 +62,6 @@ class MusicPlayerViewModel : ViewModel() {
         val commandBundle = Bundle().apply {
             putParcelableArrayList("SONGS_TO_PLAY", ArrayList(songs))
             putInt("START_INDEX", startIndex)
-            putBoolean("SHUFFLE", false)
-            putBoolean("REPEAT", false)
         }
         browser?.sendCustomCommand(
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
