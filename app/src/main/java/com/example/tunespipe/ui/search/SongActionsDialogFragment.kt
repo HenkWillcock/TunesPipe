@@ -79,9 +79,7 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
                 startIndex = 0
             }
 
-            val shuffle = false // For now, we are not shuffling when playing from a list
-            val repeat = true   // We want the playlist/song to repeat
-            playerViewModel.playSong(songsToPlay, startIndex, shuffle, repeat)
+            playerViewModel.playSong(songsToPlay, startIndex)
         }
 
         binding.playNextButton.setOnClickListener {

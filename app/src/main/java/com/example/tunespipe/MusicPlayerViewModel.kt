@@ -53,7 +53,7 @@ class MusicPlayerViewModel : ViewModel() {
     private val _playerState = MutableStateFlow<Player?>(null)
     val playerState: LiveData<Player?> = _playerState.asLiveData()
 
-    fun playSong(songs: List<Song>, startIndex: Int, shuffle: Boolean, repeat: Boolean) {
+    fun playSong(songs: List<Song>, startIndex: Int) {
         if (browser == null || songs.isEmpty()) return
 
         _isLoading.value = true
@@ -62,9 +62,8 @@ class MusicPlayerViewModel : ViewModel() {
         val commandBundle = Bundle().apply {
             putParcelableArrayList("SONGS_TO_PLAY", ArrayList(songs))
             putInt("START_INDEX", startIndex)
-            // --- Add these new parameters ---
-            putBoolean("SHUFFLE", shuffle)
-            putBoolean("REPEAT", repeat)
+            putBoolean("SHUFFLE", false)
+            putBoolean("REPEAT", false)
         }
         browser?.sendCustomCommand(
             SessionCommand("PLAY_SONG", Bundle.EMPTY),
