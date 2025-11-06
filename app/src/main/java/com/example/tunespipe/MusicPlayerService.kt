@@ -111,44 +111,54 @@ class MusicPlayerService : MediaSessionService() {
                             )
                             .build()
 
-                        // 4. Update the player on the main thread to play this one song.
                         withContext(Dispatchers.Main) {
-                            // --- START OF NEW LOGIC ---
-                            // Instead of clearing everything, we'll remove only the old auto-queued songs.
-                            // The manually queued songs are at indices [currentIndex + 1] to [currentIndex + numberOfManuallyQueuedSongs].
-                            // The auto-queued songs are everything after that.
+                            // 1. PRESERVE A COPY of the manually queued songs.
+                            val manuallyQueuedItems = mutableListOf<MediaItem>()
                             val currentIndex = player.currentMediaItemIndex
-                            val totalItems = player.mediaItemCount
-                            val autoQueueStartIndex = currentIndex + 1 + numberOfManuallyQueuedSongs
-
-                            // Remove items from the end to avoid index shifting issues.
-                            if (autoQueueStartIndex < totalItems) {
-                                player.removeMediaItems(autoQueueStartIndex, totalItems)
-                                Log.d("MusicPlayerService", "Removed old auto-queued songs.")
+                            if (numberOfManuallyQueuedSongs > 0 && currentIndex != -1) {
+                                val manualQueueStartIndex = currentIndex + 1
+                                val manualQueueEndIndex = manualQueueStartIndex + numberOfManuallyQueuedSongs
+                                if (manualQueueEndIndex <= player.mediaItemCount) {
+                                    for (i in manualQueueStartIndex until manualQueueEndIndex) {
+                                        manuallyQueuedItems.add(player.getMediaItemAt(i))
+                                    }
+                                    Log.d("MusicPlayerService", "Preserved ${manuallyQueuedItems.size} manually queued songs.")
+                                }
                             }
 
-                            val insertionPoint = currentIndex + 1
+                            // 2. CUT THE TIMELINE: Remove everything from the current song to the end.
+                            if (currentIndex != -1) {
+                                player.removeMediaItems(currentIndex, player.mediaItemCount)
+                                Log.d("MusicPlayerService", "Removed all items from current index $currentIndex onwards.")
+                            }
+
+                            // After this point, player.mediaItemCount is the new "end" of the history.
+                            val insertionPoint = player.mediaItemCount
+
+                            // 3. REBUILD THE QUEUE
+                            // Add the new song that will play now.
                             player.addMediaItem(insertionPoint, resolvedFirstMediaItem)
 
-                            // Set player modes for the new content
+                            // Re-add the preserved manual songs right after it.
+                            if (manuallyQueuedItems.isNotEmpty()) {
+                                player.addMediaItems(manuallyQueuedItems)
+                                Log.d("MusicPlayerService", "Re-added preserved manual songs.")
+                            }
+                            // The manual queue count is still correct because we just added them back.
+
+                            // 4. PLAY
                             player.shuffleModeEnabled = false
                             player.repeatMode = Player.REPEAT_MODE_OFF
-
-                            // JUMP to the newly added song and play it.
-                            player.seekTo(insertionPoint, 0)
+                            player.seekTo(insertionPoint, 0) // Seek to the song we just added
                             player.prepare()
                             player.play()
 
-                            // Counteract the automatic decrementing of this value
-                            // triggered by onMediaItemTransition() because of the new song.
-                            numberOfManuallyQueuedSongs++
-
-                            // 5. Fire-and-forget a background task to add the rest of the songs.
+                            // 5. POPULATE new auto-queue
                             queuePopulationJob = launch {
-                                // We pass the full list and the index of the song we already added.
                                 resolveAndAddRemainingSongs(songsToPlay, startIndex)
                             }
                         }
+
                     }
                 }
                 "PLAY_NEXT" -> {
