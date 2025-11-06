@@ -99,25 +99,17 @@ class QueueFragment : Fragment() {
             // Loop from the start of "Up Next" to the calculated end, but don't go past the end of the whole queue.
             for (i in upNextStartIndex until minOf(upNextEndIndex, totalItems)) {
                 val mediaItem = player.getMediaItemAt(i)
-                (mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA") as? Song)?.let { song ->
+                mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")?.let { song ->
                     queueItems.add(QueueItem.QueuedSong(song))
                 }
             }
         }
+        queueItems.add(QueueItem.Header("Then, Auto Queue"))
 
-        val strategyText = when {
-            player.shuffleModeEnabled -> "Shuffle Playlist"
-            player.repeatMode == Player.REPEAT_MODE_ALL -> "Repeat Playlist"
-            else -> "Play Once"
-        }
-        queueItems.add(QueueItem.Header("Then, Autoplay: $strategyText"))
-
-        // The automatic songs start right after the manual ones.
-        val autoQueueStartIndex = upNextEndIndex
-        if (totalItems > autoQueueStartIndex) {
-            for (i in autoQueueStartIndex until totalItems) {
+        if (totalItems > upNextEndIndex) {
+            for (i in upNextEndIndex until totalItems) {
                 val mediaItem = player.getMediaItemAt(i)
-                (mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA") as? Song)?.let { song ->
+                mediaItem.mediaMetadata.extras?.getParcelable<Song>("SONG_METADATA")?.let { song ->
                     queueItems.add(QueueItem.QueuedSong(song))
                 }
             }
