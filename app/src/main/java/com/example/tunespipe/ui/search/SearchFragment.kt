@@ -5,7 +5,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible // Import isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -14,6 +16,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tunespipe.MusicPlayerViewModel
 import com.example.tunespipe.NetworkUtils // Import NetworkUtils
+import com.example.tunespipe.R
 import com.example.tunespipe.Song
 import com.example.tunespipe.databinding.FragmentSearchBinding
 import com.example.tunespipe.searchITunes
@@ -58,6 +61,15 @@ class SearchFragment : Fragment() {
     // END OF CHANGE
 
     private fun setupSearchView() {
+        // Programmatically style the EditText inside the SearchView
+        val searchEditText = binding.searchView.findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
+        searchEditText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        searchEditText.setHintTextColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray))
+
+        // Style the underline of the SearchView
+        val searchPlate = binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_plate)
+        searchPlate.background.setTintList(ContextCompat.getColorStateList(requireContext(), R.color.search_view_underline_tint))
+
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             @UnstableApi
