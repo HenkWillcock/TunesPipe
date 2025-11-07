@@ -1,9 +1,11 @@
 package com.example.tunespipe.ui.search
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope // Import lifecycleScope
@@ -51,6 +53,24 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val tealColor = ContextCompat.getColor(requireContext(), R.color.teal_200)
+        val buttonColorStateList = ColorStateList.valueOf(tealColor)
+
+        // Apply styles to static buttons
+        (binding.playNowButton as MaterialButton).apply {
+            setTextColor(buttonColorStateList)
+            strokeColor = buttonColorStateList
+        }
+        (binding.playNextButton as MaterialButton).apply {
+            setTextColor(buttonColorStateList)
+            strokeColor = buttonColorStateList
+        }
+        (binding.addToQueueButton as MaterialButton).apply {
+            setTextColor(buttonColorStateList)
+            strokeColor = buttonColorStateList
+            iconTint = buttonColorStateList
+        }
 
         binding.songTitleText.text = song.trackName
         binding.artistNameText.text = song.artistName
@@ -108,23 +128,28 @@ class SongActionsDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun addPlaylistButton(playlist: Playlist, songIsInPlaylist: Boolean) {
+        val tealColor = ContextCompat.getColor(requireContext(), R.color.teal_200)
+        val buttonColorStateList = ColorStateList.valueOf(tealColor)
+
         val button = MaterialButton(
             requireContext(),
             null,
             com.google.android.material.R.attr.materialButtonOutlinedStyle,
         ).apply {
+            // Apply consistent styling
+            setTextColor(buttonColorStateList)
+            strokeColor = buttonColorStateList
+            iconTint = buttonColorStateList
+
             if (songIsInPlaylist) {
                 text = "Remove from ${playlist.name}"
-                // Set icon for remove action
                 setIconResource(R.drawable.ic_remove_24)
                 setOnClickListener {
                     playlistsViewModel.removeSongFromPlaylist(song.trackId, playlist.id)
-                    // Refresh the dialog or dismiss it
                     dismiss()
                 }
             } else {
                 text = "Add to ${playlist.name}"
-                // Set icon for add action
                 setIconResource(R.drawable.ic_add_24)
                 setOnClickListener {
                     playlistsViewModel.addSongToPlaylist(song, playlist.id)
