@@ -5,9 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/black"
     tools:context=".ui.search.SearchFragment">
 
-    <!-- START OF FIX: Change from SearchView to androidx.appcompat.widget.SearchView -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
         android:layout_width="0dp"
@@ -17,13 +17,16 @@
         android:queryHint="Search for a song..."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    <!-- END OF FIX -->
+        app:layout_constraintTop_toTopOf="parent"
+        app:searchIcon="@drawable/ic_search_white"
+        app:closeIcon="@drawable/ic_close_white"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchResultsRecycler"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@android:color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
