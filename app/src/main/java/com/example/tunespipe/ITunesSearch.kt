@@ -1,15 +1,16 @@
 package com.example.tunespipe
 
-import android.util.Log
 import android.os.Parcelable
+import android.util.Log
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.parcelize.Parcelize
-import okhttp3.Request
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.search.SearchInfo
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import kotlin.math.abs
 
 @Parcelize
 @Entity(tableName = "songs") // Tell Room this is a database table
@@ -25,47 +26,39 @@ data class Song(
 
 suspend fun searchITunes(searchTerm: String): List<Song> {
     return withContext(Dispatchers.IO) {
-        val client = HttpClient.instance
-
-        val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
-            .addQueryParameter("term", searchTerm)
-            .addQueryParameter("entity", "musicTrack")
-            .build()
-
-        val request = Request.Builder().url(url).build()
-
         try {
-            Log.d("TunesPipe", "Sending request to url '$url'...")
-            val response = client.newCall(request).execute()
-            Log.d("TunesPipe", "Response received.")
+            // 1. Get the YouTube Music service
+            val ytMusicService = NewPipe.getService(1)
 
-            if (!response.isSuccessful) {
-                return@withContext emptyList()
-            }
+            // 2. Build the search query and perform the search
+            val searchInfo = SearchInfo.getInfo(
+                ytMusicService,
+                ytMusicService.searchQHFactory.fromQuery(searchTerm),
+            )
+            Log.d("YouTubeSearch", "Searching YT Music for: $searchTerm. Found ${searchInfo.relatedItems.size} initial results.")
 
-            val responseBody = response.body?.string() ?: return@withContext emptyList()
-            val jsonObject = JSONObject(responseBody)
-            val resultsArray = jsonObject.optJSONArray("results") ?: return@withContext emptyList()
-
-            val allSongs = mutableListOf<Song>()
-            for (i in 0 until resultsArray.length()) {
-                val songObject = resultsArray.getJSONObject(i)
-                allSongs.add(
+            // 3. Map the raw results to our Song data class
+            val songs = searchInfo.relatedItems.mapNotNull { item ->
+                if (item is StreamInfoItem) {
+                    val videoId = item.url.substringAfter("v=")
                     Song(
-                        trackId = songObject.optString("trackId"), // Get the unique ID
-                        trackName = songObject.optString("trackName", "Unknown Track"),
-                        artistName = songObject.optString("artistName", "Unknown Artist"),
-                        artworkUrl = songObject.optString("artworkUrl100", "")
-                            .replace("100x100bb.jpg", "600x600bb.jpg"),
-                        previewUrl = songObject.optString("previewUrl", ""),
-                        durationMillis = songObject.optLong("trackTimeMillis", 0),
-                        isExplicit = songObject.optString("trackExplicitness")  in listOf("cleaned", "explicit"),
+                        trackId = videoId,
+                        trackName = item.name ?: "Unknown Track",
+                        artistName = item.uploaderName ?: "Unknown Artist",
+                        artworkUrl = item.thumbnails.lastOrNull()?.url ?: "",                        previewUrl = null,
+                        durationMillis = (item.duration ?: 0) * 1000,
+                        isExplicit = false // No reliable explicit flag from YT
                     )
-                )
+                } else {
+                    null
+                }
             }
-            allSongs
+
+            Log.d("YouTubeSearch", "Mapped to ${songs.size} Song objects.")
+            songs
         } catch (e: Exception) {
-            emptyList()
+            Log.e("YouTubeSearch", "Failed to search YouTube Music", e)
+            emptyList<Song>()
         }
     }
 }
