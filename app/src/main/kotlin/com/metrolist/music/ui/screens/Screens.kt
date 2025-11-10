@@ -12,18 +12,18 @@ sealed class Screens(
     @DrawableRes val iconIdActive: Int,
     val route: String,
 ) {
-    object Search : Screens(
-        titleId = R.string.search,
-        iconIdInactive = R.drawable.search,
-        iconIdActive = R.drawable.search,
-        route = "search"
-    )
-
     object Library : Screens(
         titleId = R.string.filter_library,
         iconIdInactive = R.drawable.library_music_outlined,
         iconIdActive = R.drawable.library_music_filled,
         route = "library"
+    )
+
+    object Search : Screens(
+        titleId = R.string.search,
+        iconIdInactive = R.drawable.search,
+        iconIdActive = R.drawable.search,
+        route = "search"
     )
 
     companion object {

@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -41,7 +39,6 @@ import com.metrolist.innertube.YouTube.SearchFilter.Companion.FILTER_ARTIST
 import com.metrolist.innertube.YouTube.SearchFilter.Companion.FILTER_COMMUNITY_PLAYLIST
 import com.metrolist.innertube.YouTube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
 import com.metrolist.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
-import com.metrolist.innertube.YouTube.SearchFilter.Companion.FILTER_VIDEO
 import com.metrolist.innertube.models.AlbumItem
 import com.metrolist.innertube.models.ArtistItem
 import com.metrolist.innertube.models.PlaylistItem
@@ -59,7 +56,6 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.EmptyPlaceholder
 import com.metrolist.music.ui.component.LocalMenuState
-import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.YouTubeListItem
 import com.metrolist.music.ui.component.shimmer.ListItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
@@ -86,10 +82,9 @@ fun OnlineSearchResult(
     val lazyListState = rememberLazyListState()
 
     val searchFilter by viewModel.filter.collectAsState()
-    val searchSummary = viewModel.summaryPage
     val itemsPage by remember(searchFilter) {
         derivedStateOf {
-            searchFilter?.value?.let {
+            searchFilter.value.let {
                 viewModel.viewStateMap[it]
             }
         }
@@ -194,55 +189,32 @@ fun OnlineSearchResult(
             .add(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
             .asPaddingValues(),
     ) {
-        if (searchFilter == null) {
-            searchSummary?.summaries?.forEach { summary ->
-                item {
-                    NavigationTitle(summary.title)
-                }
+        items(
+            items = itemsPage?.items.orEmpty().distinctBy { it.id },
+            key = { "filtered_${it.id}" },
+            itemContent = ytItemContent,
+        )
 
-                items(
-                    items = summary.items,
-                    key = { "${summary.title}/${it.id}/${summary.items.indexOf(it)}" },
-                    itemContent = ytItemContent,
-                )
-            }
-
-            if (searchSummary?.summaries?.isEmpty() == true) {
-                item {
-                    EmptyPlaceholder(
-                        icon = R.drawable.search,
-                        text = stringResource(R.string.no_results_found),
-                    )
-                }
-            }
-        } else {
-            items(
-                items = itemsPage?.items.orEmpty().distinctBy { it.id },
-                key = { "filtered_${it.id}" },
-                itemContent = ytItemContent,
-            )
-
-            if (itemsPage?.continuation != null) {
-                item(key = "loading") {
-                    ShimmerHost {
-                        repeat(3) {
-                            ListItemPlaceHolder()
-                        }
+        if (itemsPage?.continuation != null) {
+            item(key = "loading") {
+                ShimmerHost {
+                    repeat(3) {
+                        ListItemPlaceHolder()
                     }
-                }
-            }
-
-            if (itemsPage?.items?.isEmpty() == true) {
-                item {
-                    EmptyPlaceholder(
-                        icon = R.drawable.search,
-                        text = stringResource(R.string.no_results_found),
-                    )
                 }
             }
         }
 
-        if (searchFilter == null && searchSummary == null || searchFilter != null && itemsPage == null) {
+        if (itemsPage?.items?.isEmpty() == true) {
+            item {
+                EmptyPlaceholder(
+                    icon = R.drawable.search,
+                    text = stringResource(R.string.no_results_found),
+                )
+            }
+        }
+
+        if (itemsPage == null) {
             item {
                 ShimmerHost {
                     repeat(8) {
@@ -256,9 +228,7 @@ fun OnlineSearchResult(
     ChipsRow(
         chips =
         listOf(
-            null to stringResource(R.string.filter_all),
             FILTER_SONG to stringResource(R.string.filter_songs),
-            FILTER_VIDEO to stringResource(R.string.filter_videos),
             FILTER_ALBUM to stringResource(R.string.filter_albums),
             FILTER_ARTIST to stringResource(R.string.filter_artists),
             FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_community_playlists),
