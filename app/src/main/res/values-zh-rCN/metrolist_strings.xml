@@ -208,16 +208,8 @@
     <string name="audio_offload_description">使用硬解播放音频。禁用此功能可能会增加功耗，但如果您在音频播放或后期处理方面遇到问题，可能会很有用</string>
     <string name="update_channel_name">App更新</string>
     <string name="audio_offload">启用音频硬解</string>
-    <string name="integrations">集成</string>
     <string name="username">用户名</string>
     <string name="password">密码</string>
-    <string name="lastfm_integration">Last.fm 集成</string>
     <string name="lyrics_romanize_macedonian">使用马其顿语（罗马音）</string>
-    <string name="enable_scrobbling">启用记录</string>
-    <string name="lastfm_now_playing">发送正在播放的歌曲</string>
-    <string name="scrobbling_configuration">Scrobbling记录设置</string>
-    <string name="scrobble_min_track_duration">记录比…长的歌曲</string>
-    <string name="scrobble_delay_minutes">记录所需已听时间（分钟）</string>
-    <string name="scrobble_delay_percent">记录所需已听占比</string>
     <string name="swipe_song_to_remove">滑动歌曲将其从播放列表中删除</string>
 </resources>

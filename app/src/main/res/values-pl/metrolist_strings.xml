@@ -217,11 +217,6 @@
     <string name="update_available_title">Aktualizacja dostępna</string>
     <string name="update_channel_desc">Powiadomienia o nowych wersjach</string>
     <string name="lyrics_romanize_macedonian">Romanizuj macedońskie teksty</string>
-    <string name="integrations">Integracje</string>
     <string name="username">Nazwa użytkownika</string>
     <string name="password">Hasło</string>
-    <string name="lastfm_integration">Integracja Last.fm</string>
-    <string name="enable_scrobbling">Włącz przewijanie</string>
-    <string name="lastfm_now_playing">Wyślij Teraz Odtwarzane</string>
-    <string name="scrobbling_configuration">Konfiguracja scrobblowania</string>
 </resources>
