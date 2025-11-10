@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
@@ -15,3 +16,4 @@ include(":app")
 include(":innertube")
 include(":kugou")
 include(":lrclib")
+include(":extractor")

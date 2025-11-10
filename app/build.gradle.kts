@@ -223,6 +223,7 @@ dependencies {
     implementation(project(":innertube"))
     implementation(project(":kugou"))
     implementation(project(":lrclib"))
+    implementation(project(":extractor"))
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.serialization.json)
