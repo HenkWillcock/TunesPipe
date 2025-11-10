@@ -194,7 +194,6 @@ import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.utils.setAppLocale
-import com.metrolist.music.viewmodels.HomeViewModel
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -436,28 +435,15 @@ class MainActivity : ComponentActivity() {
                     val bottomInsetDp = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
 
                     val navController = rememberNavController()
-                    val homeViewModel: HomeViewModel = hiltViewModel()
-                    val accountImageUrl by homeViewModel.accountImageUrl.collectAsState()
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
                     val navigationItems = remember { Screens.MainScreens }
                     val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
                     val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
-                    val defaultOpenTab = remember {
-                        dataStore[DefaultOpenTabKey].toEnum(defaultValue = NavigationTab.HOME)
-                    }
-                    val tabOpenedFromShortcut = remember {
-                        when (intent?.action) {
-                            ACTION_LIBRARY -> NavigationTab.LIBRARY
-                            ACTION_SEARCH -> NavigationTab.SEARCH
-                            else -> null
-                        }
-                    }
 
                     val topLevelScreens = remember {
                         listOf(
-                            Screens.Home.route,
                             Screens.Search.route,
                             Screens.Library.route,
                             "settings",
@@ -719,7 +705,6 @@ class MainActivity : ComponentActivity() {
 
                     val currentTitleRes = remember(navBackStackEntry) {
                         when (navBackStackEntry?.destination?.route) {
-                            Screens.Home.route -> R.string.home
                             Screens.Search.route -> R.string.search
                             Screens.Library.route -> R.string.filter_library
                             else -> null
@@ -780,21 +765,11 @@ class MainActivity : ComponentActivity() {
                                                             Badge()
                                                         }
                                                     }) {
-                                                        if (accountImageUrl != null) {
-                                                            AsyncImage(
-                                                                model = accountImageUrl,
-                                                                contentDescription = stringResource(R.string.account),
-                                                                modifier = Modifier
-                                                                    .size(24.dp)
-                                                                    .clip(CircleShape)
-                                                            )
-                                                        } else {
-                                                            Icon(
-                                                                painter = painterResource(R.drawable.account),
-                                                                contentDescription = stringResource(R.string.account),
-                                                                modifier = Modifier.size(24.dp)
-                                                            )
-                                                        }
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.account),
+                                                            contentDescription = stringResource(R.string.account),
+                                                            modifier = Modifier.size(24.dp)
+                                                        )
                                                     }
                                                 }
                                             },
@@ -1141,15 +1116,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 Box(Modifier.weight(1f)) {
-                                    // NavHost with animations
                                     NavHost(
                                         navController = navController,
-                                        startDestination = when (tabOpenedFromShortcut ?: defaultOpenTab) {
-                                            NavigationTab.HOME -> Screens.Home
-                                            NavigationTab.LIBRARY -> Screens.Library
-                                            else -> Screens.Home
-                                        }.route,
-                                        // Enter Transition
+                                        startDestination = Screens.Search,
                                         enterTransition = {
                                             val currentRouteIndex = navigationItems.indexOfFirst {
                                                 it.route == targetState.destination.route
@@ -1163,7 +1132,6 @@ class MainActivity : ComponentActivity() {
                                             else
                                                 slideInHorizontally { -it / 4 } + fadeIn(tween(150))
                                         },
-                                        // Exit Transition
                                         exitTransition = {
                                             val currentRouteIndex = navigationItems.indexOfFirst {
                                                 it.route == initialState.destination.route
@@ -1177,7 +1145,6 @@ class MainActivity : ComponentActivity() {
                                             else
                                                 slideOutHorizontally { it / 4 } + fadeOut(tween(100))
                                         },
-                                        // Pop Enter Transition
                                         popEnterTransition = {
                                             val currentRouteIndex = navigationItems.indexOfFirst {
                                                 it.route == targetState.destination.route
@@ -1240,7 +1207,6 @@ class MainActivity : ComponentActivity() {
                                 navController = navController,
                                 onDismiss = {
                                     showAccountDialog = false
-                                    homeViewModel.refresh()
                                 },
                                 latestVersionName = latestVersionName
                             )

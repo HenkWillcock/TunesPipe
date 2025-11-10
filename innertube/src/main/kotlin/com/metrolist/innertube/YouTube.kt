@@ -46,7 +46,6 @@ import com.metrolist.innertube.pages.ChartsPage
 import com.metrolist.innertube.pages.BrowseResult
 import com.metrolist.innertube.pages.ExplorePage
 import com.metrolist.innertube.pages.HistoryPage
-import com.metrolist.innertube.pages.HomePage
 import com.metrolist.innertube.pages.LibraryContinuationPage
 import com.metrolist.innertube.pages.LibraryPage
 import com.metrolist.innertube.pages.MoodAndGenres
@@ -468,39 +467,6 @@ object YouTube {
         )
     }
 
-    suspend fun home(continuation: String? = null, params: String? = null): Result<HomePage> = runCatching {
-        if (continuation != null) {
-            return@runCatching homeContinuation(continuation).getOrThrow()
-        }
-
-        val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_home", params = params).body<BrowseResponse>()
-        val continuation = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
-            ?.tabRenderer?.content?.sectionListRenderer?.continuations?.getContinuation()
-        val sectionListRender = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
-            ?.tabRenderer?.content?.sectionListRenderer
-        val sections = sectionListRender?.contents!!
-            .mapNotNull { it.musicCarouselShelfRenderer }
-            .mapNotNull {
-                HomePage.Section.fromMusicCarouselShelfRenderer(it)
-            }.toMutableList()
-        HomePage(sections, continuation)
-    }
-
-    private suspend fun homeContinuation(continuation: String): Result<HomePage> = runCatching {
-        val response =
-            innerTube.browse(WEB_REMIX, continuation = continuation).body<BrowseResponse>()
-        val continuation =
-            response.continuationContents?.sectionListContinuation?.continuations?.getContinuation()
-        HomePage(
-            response.continuationContents?.sectionListContinuation?.contents
-            ?.mapNotNull { it.musicCarouselShelfRenderer }
-            ?.mapNotNull {
-                HomePage.Section.fromMusicCarouselShelfRenderer(it)
-            }.orEmpty(),
-            continuation
-        )
-    }
-
     suspend fun explore(): Result<ExplorePage> = runCatching {
         val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_explore").body<BrowseResponse>()
         ExplorePage(
@@ -588,7 +554,7 @@ object YouTube {
                 )
             }
 
-            else -> { // contents?.musicShelfRenderer != null
+            else -> {
                 LibraryPage(
                     items = contents?.musicShelfRenderer?.contents!!
                         .mapNotNull (MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
@@ -648,7 +614,7 @@ object YouTube {
         /*
          * We need to fetch the artist page when accessing the library because it allows to have
          * a proper playEndpoint, which is needed to correctly report the playing indicator in
-         * the home page.
+         * the home page. (TODO sounds like we can simplify this after removing home page)
          *
          * Despite this, we need to use the old thumbnail because it's the proper format for a
          * square picture, which is what we need.

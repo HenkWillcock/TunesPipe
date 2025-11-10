@@ -41,9 +41,6 @@ fun NavGraphBuilder.navigationBuilder(
     scrollBehavior: TopAppBarScrollBehavior,
     latestVersionName: String,
 ) {
-    composable(Screens.Home.route) {
-        HomeScreen(navController)
-    }
     composable(
         Screens.Library.route,
     ) {

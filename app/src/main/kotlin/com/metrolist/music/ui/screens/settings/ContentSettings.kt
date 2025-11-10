@@ -1,23 +1,13 @@
 package com.metrolist.music.ui.screens.settings
 
-import android.annotation.TargetApi
-import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.provider.Settings
-import android.os.LocaleList
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -37,27 +27,46 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.floatPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.metrolist.innertube.YouTube
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
-import com.metrolist.music.constants.*
-import com.metrolist.music.ui.component.*
+import com.metrolist.music.constants.AppLanguageKey
+import com.metrolist.music.constants.ContentCountryKey
+import com.metrolist.music.constants.ContentLanguageKey
+import com.metrolist.music.constants.CountryCodeToName
+import com.metrolist.music.constants.EnableKugouKey
+import com.metrolist.music.constants.EnableLrcLibKey
+import com.metrolist.music.constants.HideExplicitKey
+import com.metrolist.music.constants.LanguageCodeToName
+import com.metrolist.music.constants.PreferredLyricsProvider
+import com.metrolist.music.constants.PreferredLyricsProviderKey
+import com.metrolist.music.constants.ProxyEnabledKey
+import com.metrolist.music.constants.ProxyPasswordKey
+import com.metrolist.music.constants.ProxyTypeKey
+import com.metrolist.music.constants.ProxyUrlKey
+import com.metrolist.music.constants.ProxyUsernameKey
+import com.metrolist.music.constants.QuickPicks
+import com.metrolist.music.constants.QuickPicksKey
+import com.metrolist.music.constants.SYSTEM_DEFAULT
+import com.metrolist.music.constants.TopSize
+import com.metrolist.music.ui.component.EditTextPreference
+import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.ListPreference
+import com.metrolist.music.ui.component.PreferenceEntry
+import com.metrolist.music.ui.component.PreferenceGroupTitle
+import com.metrolist.music.ui.component.SwitchPreference
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -93,7 +102,6 @@ fun ContentSettings(
             defaultValue = PreferredLyricsProvider.LRCLIB,
         )
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
-    val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
 
     var showProxyConfigurationDialog by rememberSaveable {
         mutableStateOf(false)
@@ -367,19 +375,6 @@ fun ContentSettings(
             value = lengthTop,
             isInputValid = { it.toIntOrNull()?.let { num -> num > 0 } == true },
             onValueChange = onLengthTopChange,
-        )
-        ListPreference(
-            title = { Text(stringResource(R.string.set_quick_picks)) },
-            icon = { Icon(painterResource(R.drawable.home_outlined), null) },
-            selectedValue = quickPicks,
-            values = listOf(QuickPicks.QUICK_PICKS, QuickPicks.LAST_LISTEN),
-            valueText = {
-                when (it) {
-                    QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
-                    QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
-                }
-            },
-            onValueSelected = onQuickPicksChange,
         )
     }
 

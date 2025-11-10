@@ -122,7 +122,7 @@ fun AppearanceSettings(
     val (pureBlack, onPureBlackChange) = rememberPreference(PureBlackKey, defaultValue = false)
     val (defaultOpenTab, onDefaultOpenTabChange) = rememberEnumPreference(
         DefaultOpenTabKey,
-        defaultValue = NavigationTab.HOME
+        defaultValue = NavigationTab.LIBRARY
     )
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
         PlayerButtonsStyleKey,
@@ -569,7 +569,6 @@ fun AppearanceSettings(
             onValueSelected = onDefaultOpenTabChange,
             valueText = {
                 when (it) {
-                    NavigationTab.HOME -> stringResource(R.string.home)
                     NavigationTab.SEARCH -> stringResource(R.string.search)
                     NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
                 }
@@ -693,7 +692,6 @@ enum class DarkMode {
 }
 
 enum class NavigationTab {
-    HOME,
     SEARCH,
     LIBRARY,
 }
@@ -702,9 +700,4 @@ enum class LyricsPosition {
     LEFT,
     CENTER,
     RIGHT,
-}
-
-enum class PlayerTextAlignment {
-    SIDED,
-    CENTER,
 }

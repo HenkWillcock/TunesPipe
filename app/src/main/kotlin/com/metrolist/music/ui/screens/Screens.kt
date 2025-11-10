@@ -12,13 +12,6 @@ sealed class Screens(
     @DrawableRes val iconIdActive: Int,
     val route: String,
 ) {
-    object Home : Screens(
-        titleId = R.string.home,
-        iconIdInactive = R.drawable.home_outlined,
-        iconIdActive = R.drawable.home_filled,
-        route = "home"
-    )
-
     object Search : Screens(
         titleId = R.string.search,
         iconIdInactive = R.drawable.search,
@@ -34,6 +27,6 @@ sealed class Screens(
     )
 
     companion object {
-        val MainScreens = listOf(Home, Search, Library)
+        val MainScreens = listOf(Search, Library)
     }
 }

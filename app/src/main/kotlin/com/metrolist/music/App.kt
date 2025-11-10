@@ -18,7 +18,6 @@ import coil3.request.crossfade
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.YouTubeLocale
 import com.metrolist.kugou.KuGou
-import com.metrolist.music.BuildConfig
 import com.metrolist.music.constants.*
 import com.metrolist.music.di.ApplicationScope
 import com.metrolist.music.extensions.toEnum
