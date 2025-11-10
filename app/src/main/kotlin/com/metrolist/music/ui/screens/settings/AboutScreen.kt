@@ -88,7 +88,7 @@ fun AboutScreen(
             verticalAlignment = Alignment.Top,
         ) {
             Text(
-                text = "METROLIST",
+                text = "TUNESPIPE",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
@@ -153,20 +153,12 @@ fun AboutScreen(
             }
         }
 
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = "MO AGAMY",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary,
-        )
-
         Spacer(Modifier.height(8.dp))
 
         Row {
             IconButton(
                 onClick = {
-                    uriHandler.openUri("https://github.com/mostafaalagamy/metrolist")
+                    uriHandler.openUri("https://github.com/HenkWillcock/TunesPipeWebsite")
                 },
             ) {
                 Icon(
@@ -177,7 +169,7 @@ fun AboutScreen(
 
             IconButton(
                 onClick = {
-                    uriHandler.openUri("https://www.instagram.com/mostafaalagamy")
+                    uriHandler.openUri("https://www.facebook.com/henk.willcock/")
                 }
             ) {
                 Icon(
@@ -208,7 +200,7 @@ fun AboutScreen(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Damian Sobczak",
+            text = "Henk Willcock",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.clickable {
