@@ -569,8 +569,8 @@ fun AppearanceSettings(
             onValueSelected = onDefaultOpenTabChange,
             valueText = {
                 when (it) {
-                    NavigationTab.SEARCH -> stringResource(R.string.search)
                     NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
+                    NavigationTab.SEARCH -> stringResource(R.string.search)
                 }
             },
         )

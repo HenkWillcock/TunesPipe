@@ -444,8 +444,8 @@ class MainActivity : ComponentActivity() {
 
                     val topLevelScreens = remember {
                         listOf(
-                            Screens.Search.route,
                             Screens.Library.route,
+                            Screens.Search.route,
                             "settings",
                         )
                     }
@@ -705,8 +705,8 @@ class MainActivity : ComponentActivity() {
 
                     val currentTitleRes = remember(navBackStackEntry) {
                         when (navBackStackEntry?.destination?.route) {
-                            Screens.Search.route -> R.string.search
                             Screens.Library.route -> R.string.filter_library
+                            Screens.Search.route -> R.string.search
                             else -> null
                         }
                     }
@@ -1118,7 +1118,7 @@ class MainActivity : ComponentActivity() {
                                 Box(Modifier.weight(1f)) {
                                     NavHost(
                                         navController = navController,
-                                        startDestination = Screens.Search,
+                                        startDestination = Screens.Library.route,
                                         enterTransition = {
                                             val currentRouteIndex = navigationItems.indexOfFirst {
                                                 it.route == targetState.destination.route
@@ -1327,7 +1327,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ACTION_SEARCH = "com.metrolist.music.action.SEARCH"
-        const val ACTION_LIBRARY = "com.metrolist.music.action.LIBRARY"
     }
 }
 
