@@ -151,7 +151,6 @@ import com.tunespipe.music.playback.MusicService
 import com.tunespipe.music.playback.MusicService.MusicBinder
 import com.tunespipe.music.playback.PlayerConnection
 import com.tunespipe.music.playback.queues.YouTubeQueue
-import com.tunespipe.music.ui.component.AccountSettingsDialog
 import com.tunespipe.music.ui.component.BottomSheetMenu
 import com.tunespipe.music.ui.component.BottomSheetPage
 import com.tunespipe.music.ui.component.IconButton
@@ -697,8 +696,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    var showAccountDialog by remember { mutableStateOf(false) }
-
                     val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
                     val insetBg = if (playerBottomSheetState.progress > 0f) Color.Transparent else baseBg
 
@@ -745,14 +742,14 @@ class MainActivity : ComponentActivity() {
                                                         contentDescription = stringResource(R.string.stats)
                                                     )
                                                 }
-                                                IconButton(onClick = { showAccountDialog = true }) {
+                                                IconButton(onClick = { navController.navigate("settings") }) {
                                                     BadgedBox(badge = {
                                                         if (latestVersionName != BuildConfig.VERSION_NAME) {
                                                             Badge()
                                                         }
                                                     }) {
                                                         Icon(
-                                                            painter = painterResource(R.drawable.account),
+                                                            painter = painterResource(R.drawable.settings),
                                                             contentDescription = stringResource(R.string.account),
                                                             modifier = Modifier.size(24.dp)
                                                         )
@@ -1187,16 +1184,6 @@ class MainActivity : ComponentActivity() {
                             state = LocalBottomSheetPageState.current,
                             modifier = Modifier.align(Alignment.BottomCenter)
                         )
-
-                        if (showAccountDialog) {
-                            AccountSettingsDialog(
-                                navController = navController,
-                                onDismiss = {
-                                    showAccountDialog = false
-                                },
-                                latestVersionName = latestVersionName
-                            )
-                        }
 
                         sharedSong?.let { song ->
                             playerConnection?.let {

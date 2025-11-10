@@ -46,7 +46,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun BackupAndRestore(
     navController: NavController,
-    scrollBehavior: TopAppBarScrollBehavior,
     viewModel: BackupRestoreViewModel = hiltViewModel(),
 ) {
     var importedTitle by remember { mutableStateOf("") }
@@ -162,7 +161,6 @@ fun BackupAndRestore(
     )
     AddToPlaylistDialogOnline(
         isVisible = showChoosePlaylistDialogOnline,
-        allowSyncing = false,
         initialTextFieldValue = importedTitle,
         songs = importedSongs,
         onDismiss = { showChoosePlaylistDialogOnline = false },

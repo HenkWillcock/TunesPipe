@@ -83,7 +83,6 @@ fun LibraryPlaylistsScreen(
     filterContent: @Composable () -> Unit,
     viewModel: LibraryPlaylistsViewModel = hiltViewModel(),
     initialTextFieldValue: String? = null,
-    allowSyncing: Boolean = true,
 ) {
     val menuState = LocalMenuState.current
 
@@ -187,7 +186,6 @@ fun LibraryPlaylistsScreen(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             initialTextFieldValue = initialTextFieldValue,
-            allowSyncing = allowSyncing
         )
     }
 

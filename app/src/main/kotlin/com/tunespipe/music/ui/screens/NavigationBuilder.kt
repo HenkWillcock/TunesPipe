@@ -264,7 +264,7 @@ fun NavGraphBuilder.navigationBuilder(
         PrivacySettings(navController, scrollBehavior)
     }
     composable("settings/backup_restore") {
-        BackupAndRestore(navController, scrollBehavior)
+        BackupAndRestore(navController)
     }
     composable("settings/updater") {
         UpdaterScreen(navController, scrollBehavior)
