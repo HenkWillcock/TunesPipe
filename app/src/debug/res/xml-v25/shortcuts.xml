@@ -6,9 +6,9 @@
         android:shortcutId="library"
         android:shortcutShortLabel="@string/filter_library">
         <intent
-            android:action="com.metrolist.music.action.LIBRARY"
-            android:targetClass="com.metrolist.music.MainActivity"
-            android:targetPackage="com.metrolist.music.debug" />
+            android:action="com.tunespipe.music.action.LIBRARY"
+            android:targetClass="com.tunespipe.music.MainActivity"
+            android:targetPackage="com.tunespipe.music.debug" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -16,8 +16,8 @@
         android:shortcutId="search"
         android:shortcutShortLabel="@string/search">
         <intent
-            android:action="com.metrolist.music.action.SEARCH"
-            android:targetClass="com.metrolist.music.MainActivity"
-            android:targetPackage="com.metrolist.music.debug" />
+            android:action="com.tunespipe.music.action.SEARCH"
+            android:targetClass="com.tunespipe.music.MainActivity"
+            android:targetPackage="com.tunespipe.music.debug" />
     </shortcut>
 </shortcuts>

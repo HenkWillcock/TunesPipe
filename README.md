@@ -55,13 +55,13 @@ If you're in a region where YouTube Music is not supported, you won't be able to
 <tr>
 <td align="center">
 <a href="https://github.com/mostafaalagamy/Metrolist/releases/latest/download/Metrolist.apk"><img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png" alt="Get it on GitHub" height="82"></a><br/>
-<a href="https://www.openapk.net/metrolist/com.metrolist.music/"><img src="https://www.openapk.net/images/openapk-badge.png" alt="Get it on OpenAPK" height="80"></a>
+<a href="https://www.openapk.net/metrolist/com.tunespipe.music/"><img src="https://www.openapk.net/images/openapk-badge.png" alt="Get it on OpenAPK" height="80"></a>
 </td>
 <td align="center">
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/mostafaalagamy/Metrolist/"><img src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="50"></a>
 </td>
 <td align="center">
-<a href="https://apt.izzysoft.de/fdroid/index/apk/com.metrolist.music"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80"></a><br/>
+<a href="https://apt.izzysoft.de/fdroid/index/apk/com.tunespipe.music"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80"></a><br/>
 <a href="https://belberi.com/metrolist/?fbclid=PAY2xjawJP5dlleHRuA2FlbQIxMAABpjSk1oBp4e8aSV4nfX2dfunQObTlMWIkN-aVA9CSq36pnmkHsvfoYTjhHg_aem_9o9OGbQuZ2PjJTArq21UDA"><img src="https://github.com/mostafaalagamy/Metrolist/blob/main/fastlane/metadata/android/en-US/images/belberi_github.png" alt="Get it on Belberi" height="82"></a>
 </td>
 </tr>
