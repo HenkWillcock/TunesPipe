@@ -358,6 +358,6 @@ constructor(
 class LibraryViewModel
 @Inject
 constructor() : ViewModel() {
-    private val curScreen = mutableStateOf(LibraryFilter.LIBRARY)
+    private val curScreen = mutableStateOf(LibraryFilter.PLAYLISTS)
     val filter: MutableState<LibraryFilter> = curScreen
 }

@@ -200,7 +200,7 @@ fun AppearanceSettings(
 
     val (defaultChip, onDefaultChipChange) = rememberEnumPreference(
         key = ChipSortTypeKey,
-        defaultValue = LibraryFilter.LIBRARY
+        defaultValue = LibraryFilter.PLAYLISTS
     )
 
     var showSliderOptionDialog by rememberSaveable {
@@ -580,7 +580,7 @@ fun AppearanceSettings(
             icon = { Icon(painterResource(R.drawable.tab), null) },
             selectedValue = defaultChip,
             values = listOf(
-                LibraryFilter.LIBRARY, LibraryFilter.PLAYLISTS, LibraryFilter.SONGS,
+                LibraryFilter.PLAYLISTS, LibraryFilter.SONGS,
                 LibraryFilter.ALBUMS, LibraryFilter.ARTISTS
             ),
             valueText = {
@@ -589,7 +589,6 @@ fun AppearanceSettings(
                     LibraryFilter.ARTISTS -> stringResource(R.string.artists)
                     LibraryFilter.ALBUMS -> stringResource(R.string.albums)
                     LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                    LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
                 }
             },
             onValueSelected = onDefaultChipChange,

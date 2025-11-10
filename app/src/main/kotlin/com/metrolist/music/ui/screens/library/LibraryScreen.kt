@@ -17,7 +17,7 @@ import com.metrolist.music.utils.rememberEnumPreference
 
 @Composable
 fun LibraryScreen(navController: NavController) {
-    var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
+    var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.PLAYLISTS)
 
     val filterContent = @Composable {
         Row {
@@ -31,12 +31,7 @@ fun LibraryScreen(navController: NavController) {
                 ),
                 currentValue = filterType,
                 onValueUpdate = {
-                    filterType =
-                        if (filterType == it) {
-                            LibraryFilter.LIBRARY
-                        } else {
-                            it
-                        }
+                    filterType = if (filterType == it) LibraryFilter.PLAYLISTS else it
                 },
                 modifier = Modifier.weight(1f),
             )
@@ -47,19 +42,18 @@ fun LibraryScreen(navController: NavController) {
         modifier = Modifier.fillMaxSize(),
     ) {
         when (filterType) {
-            LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
             LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
             LibraryFilter.SONGS -> LibrarySongsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
+                { filterType = LibraryFilter.PLAYLISTS })
 
             LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
+                { filterType = LibraryFilter.PLAYLISTS })
 
             LibraryFilter.ARTISTS -> LibraryArtistsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
+                { filterType = LibraryFilter.PLAYLISTS })
         }
     }
 }
