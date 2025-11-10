@@ -1,7 +1,5 @@
 [versions]
 androidGradlePlugin = "8.13.0"
-annotation = "1.9.1"
-json = "20250517"
 kotlin = "2.2.10"
 compose = "1.9.3"
 lifecycle = "2.9.4"
@@ -13,14 +11,12 @@ hilt = "2.57.1"
 ktor = "3.3.1"
 ksp = "2.2.10-2.0.2"
 jsoup = "1.21.2"
-multidex = "2.0.1"
 coil = "3.3.0"
 ucrop = "2.2.11"
 guava = "33.5.0-android"
 coroutinesGuava = "1.10.2"
 concurrentFutures = "1.3.0"
 activity = "1.11.0"
-navigation = "2.9.5"
 hiltNavigation = "1.3.0"
 datastore = "1.1.7"
 composeReorderable = "3.0.0"
@@ -37,7 +33,6 @@ kuromojiIpadic = "0.9.0"
 extractor = "8773f0d"
 
 [libraries]
-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesGuava" }
 concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
@@ -95,19 +90,12 @@ ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = 
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
-
-json = { module = "org.json:json", version.ref = "json" }
-
 brotli = { module = "org.brotli:dec", version.ref = "brotli" }
-
 desugaring = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugaring" }
-
 junit = { module = "junit:junit", version.ref = "junit" }
-
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
-#newpipe-extractor = { module = "com.github.libre-tube:NewPipeExtractor", version = "70abbdb" }
-#newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version = "dev-SNAPSHOT" }
+# TODO remove this
 extractor = { module = "com.github.mostafaalagamy:MetrolistExtractor", version.ref = "extractor" }
 
 kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "kuromojiIpadic" }

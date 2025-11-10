@@ -70,7 +70,6 @@ private class NewPipeDownloaderImpl(proxy: Proxy?, proxyAuth: String?) : Downloa
     override fun executeAsync(request: Request, callback: AsyncCallback?): CancellableCall {
         TODO("Placeholder")
     }
-
 }
 
 object NewPipeUtils {
