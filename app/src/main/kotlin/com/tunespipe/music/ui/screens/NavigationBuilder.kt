@@ -272,7 +272,4 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/about") {
         AboutScreen(navController, scrollBehavior)
     }
-    composable("login") {
-        LoginScreen(navController)
-    }
 }

@@ -1,62 +1,35 @@
 package com.tunespipe.music.ui.screens.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.tunespipe.innertube.YouTube
-import com.tunespipe.innertube.utils.parseCookieString
 import com.tunespipe.music.BuildConfig
 import com.tunespipe.music.R
-import com.tunespipe.music.constants.AccountChannelHandleKey
-import com.tunespipe.music.constants.AccountEmailKey
-import com.tunespipe.music.constants.AccountNameKey
-import com.tunespipe.music.constants.DataSyncIdKey
-import com.tunespipe.music.constants.InnerTubeCookieKey
-import com.tunespipe.music.constants.UseLoginForBrowse
-import com.tunespipe.music.constants.VisitorDataKey
-import com.tunespipe.music.constants.YtmSyncKey
-import com.tunespipe.music.ui.component.InfoLabel
 import com.tunespipe.music.ui.component.PreferenceEntry
-import com.tunespipe.music.ui.component.SwitchPreference
-import com.tunespipe.music.ui.component.TextFieldDialog
 import com.tunespipe.music.utils.Updater
-import com.tunespipe.music.utils.rememberPreference
-import com.tunespipe.music.viewmodels.AccountSettingsViewModel
 
 @Composable
 fun AccountSettings(
@@ -64,26 +37,7 @@ fun AccountSettings(
     onClose: () -> Unit,
     latestVersionName: String
 ) {
-    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-
-    val (accountNamePref, onAccountNameChange) = rememberPreference(AccountNameKey, "")
-    val (accountEmail, onAccountEmailChange) = rememberPreference(AccountEmailKey, "")
-    val (accountChannelHandle, onAccountChannelHandleChange) = rememberPreference(AccountChannelHandleKey, "")
-    val (innerTubeCookie, onInnerTubeCookieChange) = rememberPreference(InnerTubeCookieKey, "")
-    val (visitorData, onVisitorDataChange) = rememberPreference(VisitorDataKey, "")
-    val (dataSyncId, onDataSyncIdChange) = rememberPreference(DataSyncIdKey, "")
-
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
-    val (useLoginForBrowse, onUseLoginForBrowseChange) = rememberPreference(UseLoginForBrowse, true)
-    val (ytmSync, onYtmSyncChange) = rememberPreference(YtmSyncKey, true)
-
-    val accountSettingsViewModel: AccountSettingsViewModel = hiltViewModel()
-
-    var showToken by remember { mutableStateOf(false) }
-    var showTokenEditor by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -106,149 +60,6 @@ fun AccountSettings(
             IconButton(onClick = onClose) {
                 Icon(painterResource(R.drawable.close), contentDescription = null)
             }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        val accountSectionModifier = Modifier.clickable {
-            onClose()
-            if (isLoggedIn) {
-                navController.navigate("account")
-            } else {
-                navController.navigate("login")
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = accountSectionModifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 18.dp, vertical = 12.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.login),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.login),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(start = 5.dp)
-                )
-            }
-
-            if (isLoggedIn) {
-                OutlinedButton(
-                    onClick = {
-                        accountSettingsViewModel.logoutAndClearSyncedContent(context, onInnerTubeCookieChange)
-                    },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Text(stringResource(R.string.action_logout))
-                }
-            }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        if (showTokenEditor) {
-            val text = """
-                ***INNERTUBE COOKIE*** =$innerTubeCookie
-                ***VISITOR DATA*** =$visitorData
-                ***DATASYNC ID*** =$dataSyncId
-                ***ACCOUNT NAME*** =$accountNamePref
-                ***ACCOUNT EMAIL*** =$accountEmail
-                ***ACCOUNT CHANNEL HANDLE*** =$accountChannelHandle
-            """.trimIndent()
-
-            TextFieldDialog(
-                initialTextFieldValue = TextFieldValue(text),
-                onDone = { data ->
-                    data.split("\n").forEach {
-                        when {
-                            it.startsWith("***INNERTUBE COOKIE*** =") -> onInnerTubeCookieChange(it.substringAfter("="))
-                            it.startsWith("***VISITOR DATA*** =") -> onVisitorDataChange(it.substringAfter("="))
-                            it.startsWith("***DATASYNC ID*** =") -> onDataSyncIdChange(it.substringAfter("="))
-                            it.startsWith("***ACCOUNT NAME*** =") -> onAccountNameChange(it.substringAfter("="))
-                            it.startsWith("***ACCOUNT EMAIL*** =") -> onAccountEmailChange(it.substringAfter("="))
-                            it.startsWith("***ACCOUNT CHANNEL HANDLE*** =") -> onAccountChannelHandleChange(it.substringAfter("="))
-                        }
-                    }
-                },
-                onDismiss = { showTokenEditor = false },
-                singleLine = false,
-                maxLines = 20,
-                isInputValid = {
-                    it.isNotEmpty() && "SAPISID" in parseCookieString(it)
-                },
-                extraContent = {
-                    InfoLabel(text = stringResource(R.string.token_adv_login_description))
-                }
-            )
-        }
-
-        PreferenceEntry(
-            title = {
-                Text(
-                    when {
-                        !isLoggedIn -> stringResource(R.string.advanced_login)
-                        showToken -> stringResource(R.string.token_shown)
-                        else -> stringResource(R.string.token_hidden)
-                    }
-                )
-            },
-            icon = { Icon(painterResource(R.drawable.token), null) },
-            onClick = {
-                if (!isLoggedIn) showTokenEditor = true
-                else if (!showToken) showToken = true
-                else showTokenEditor = true
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface)
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        if (isLoggedIn) {
-            SwitchPreference(
-                title = { Text(stringResource(R.string.more_content)) },
-                description = null,
-                icon = { Icon(painterResource(R.drawable.add_circle), null) },
-                checked = useLoginForBrowse,
-                onCheckedChange = {
-                    YouTube.useLoginForBrowse = it
-                    onUseLoginForBrowseChange(it)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-            )
-  
-            Spacer(Modifier.height(4.dp))
-
-            SwitchPreference(
-                title = { Text(stringResource(R.string.yt_sync)) },
-                icon = { Icon(painterResource(R.drawable.cached), null) },
-                checked = ytmSync,
-                onCheckedChange = onYtmSyncChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-            )
         }
 
         Spacer(Modifier.height(12.dp))
