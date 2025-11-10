@@ -58,9 +58,8 @@ constructor(
     }
 
     fun loadMore() {
-        val filter = filter.value?.value
+        val filter = filter.value.value
         viewModelScope.launch {
-            if (filter == null) return@launch
             val viewState = viewStateMap[filter] ?: return@launch
             val continuation = viewState.continuation
             if (continuation != null) {
