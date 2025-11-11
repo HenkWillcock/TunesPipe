@@ -21,10 +21,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.tunespipe.innertube.utils.parseCookieString
+import com.tunespipe.innertube.YouTube
 import com.tunespipe.music.LocalDatabase
 import com.tunespipe.music.R
-import com.tunespipe.music.constants.InnerTubeCookieKey
 import com.tunespipe.music.constants.ListThumbnailSize
 import com.tunespipe.music.db.entities.Playlist
 import com.tunespipe.music.ui.component.CreatePlaylistDialog
@@ -32,8 +31,6 @@ import com.tunespipe.music.ui.component.DefaultDialog
 import com.tunespipe.music.ui.component.ListDialog
 import com.tunespipe.music.ui.component.ListItem
 import com.tunespipe.music.ui.component.PlaylistListItem
-import com.tunespipe.music.utils.rememberPreference
-import com.tunespipe.innertube.YouTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -48,10 +45,6 @@ fun AddToPlaylistDialog(
     val coroutineScope = rememberCoroutineScope()
     var playlists by remember {
         mutableStateOf(emptyList<Playlist>())
-    }
-    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
     }
     var showCreatePlaylistDialog by rememberSaveable {
         mutableStateOf(false)

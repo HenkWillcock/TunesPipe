@@ -155,11 +155,6 @@ fun LibraryPlaylistsScreen(
     val scrollToTop =
         backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsState()
 
-    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
-
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
 
     LaunchedEffect(Unit) {

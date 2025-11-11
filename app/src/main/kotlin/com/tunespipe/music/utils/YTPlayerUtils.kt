@@ -13,10 +13,7 @@ import com.tunespipe.innertube.models.YouTubeClient.Companion.ANDROID_VR_1_61_48
 import com.tunespipe.innertube.models.YouTubeClient.Companion.IOS
 import com.tunespipe.innertube.models.YouTubeClient.Companion.IPADOS
 import com.tunespipe.innertube.models.YouTubeClient.Companion.MOBILE
-import com.tunespipe.innertube.models.YouTubeClient.Companion.TVHTML5
-import com.tunespipe.innertube.models.YouTubeClient.Companion.TVHTML5_SIMPLY_EMBEDDED_PLAYER
 import com.tunespipe.innertube.models.YouTubeClient.Companion.WEB
-import com.tunespipe.innertube.models.YouTubeClient.Companion.WEB_CREATOR
 import com.tunespipe.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.tunespipe.innertube.models.response.PlayerResponse
 import okhttp3.OkHttpClient
@@ -48,11 +45,8 @@ object YTPlayerUtils {
         IPADOS,
         ANDROID_VR_NO_AUTH,
         MOBILE,
-        TVHTML5,
-        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         IOS,
         WEB,
-        WEB_CREATOR
     )
     data class PlaybackData(
         val audioConfig: PlayerResponse.PlayerConfig.AudioConfig?,
@@ -82,18 +76,6 @@ object YTPlayerUtils {
          */
         val signatureTimestamp = getSignatureTimestampOrNull(videoId)
         Timber.tag(logTag).d("Signature timestamp: $signatureTimestamp")
-
-        val isLoggedIn = YouTube.cookie != null
-        val sessionId =
-            if (isLoggedIn) {
-                // signed in sessions use dataSyncId as identifier
-                YouTube.dataSyncId
-            } else {
-                // signed out sessions use visitorData as identifier
-                YouTube.visitorData
-            }
-        Timber.tag(logTag).d("Session authentication status: ${if (isLoggedIn) "Logged in" else "Not logged in"}")
-
         Timber.tag(logTag).d("Attempting to get player response using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
         val mainPlayerResponse =
             YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp).getOrThrow()
@@ -122,13 +104,6 @@ object YTPlayerUtils {
                 // after main client use fallback clients
                 client = STREAM_FALLBACK_CLIENTS[clientIndex]
                 Timber.tag(logTag).d("Trying fallback client ${clientIndex + 1}/${STREAM_FALLBACK_CLIENTS.size}: ${client.clientName}")
-
-                if (client.loginRequired && !isLoggedIn && YouTube.cookie == null) {
-                    // skip client if it requires login but user is not logged in
-                    Timber.tag(logTag).d("Skipping client ${client.clientName} - requires login but user is not logged in")
-                    continue
-                }
-
                 Timber.tag(logTag).d("Fetching player response for fallback client: ${client.clientName}")
                 streamPlayerResponse =
                     YouTube.player(videoId, playlistId, client, signatureTimestamp).getOrNull()

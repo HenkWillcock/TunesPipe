@@ -17,14 +17,10 @@ data class YouTubeClient(
     val cronetVersion: String? = null,
     val packageName: String? = null,
     val friendlyName: String? = null,
-    val loginSupported: Boolean = false,
-    val loginRequired: Boolean = false,
     val useSignatureTimestamp: Boolean = false,
     val isEmbedded: Boolean = false,
-    // val origin: String? = null,
-    // val referer: String? = null,
 ) {
-    fun toContext(locale: YouTubeLocale, visitorData: String?, dataSyncId: String?) = Context(
+    fun toContext(locale: YouTubeLocale, visitorData: String?) = Context(
         client = Context.Client(
             clientName = clientName,
             clientVersion = clientVersion,
@@ -38,7 +34,7 @@ data class YouTubeClient(
             visitorData = visitorData
         ),
         user = Context.User(
-            onBehalfOfUser = if (loginSupported) dataSyncId else null
+            onBehalfOfUser = null
         ),
     )
 
@@ -64,39 +60,7 @@ data class YouTubeClient(
             clientVersion = "1.20250310.01.00",
             clientId = "67",
             userAgent = USER_AGENT_WEB,
-            loginSupported = true,
             useSignatureTimestamp = true,
-        )
-
-        val WEB_CREATOR = YouTubeClient(
-            clientName = "WEB_CREATOR",
-            clientVersion = "1.20250312.03.01",
-            clientId = "62",
-            userAgent = USER_AGENT_WEB,
-            loginSupported = true,
-            loginRequired = true,
-            useSignatureTimestamp = true,
-        )
-
-        val TVHTML5 = YouTubeClient(
-            clientName = "TVHTML5",
-            clientVersion = "7.20250312.16.00",
-            clientId = "7",
-            userAgent = "Mozilla/5.0(SMART-TV; Linux; Tizen 4.0.0.2) AppleWebkit/605.1.15 (KHTML, like Gecko) SamsungBrowser/9.2 TV Safari/605.1.15",
-            loginSupported = true,
-            loginRequired = true,
-            useSignatureTimestamp = true
-        )
-
-        val TVHTML5_SIMPLY_EMBEDDED_PLAYER = YouTubeClient(
-            clientName = "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-            clientVersion = "2.0",
-            clientId = "85",
-            userAgent = "Mozilla/5.0 (PlayStation; PlayStation 4/12.02) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15",
-            loginSupported = true,
-            loginRequired = true,
-            useSignatureTimestamp = true,
-            isEmbedded = true,
         )
 
         val IOS = YouTubeClient(
@@ -112,7 +76,6 @@ data class YouTubeClient(
             clientVersion = "20.10.38",
             clientId = "3",
             userAgent = "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip",
-            loginSupported = true,
             useSignatureTimestamp = true
         )
 
@@ -121,7 +84,6 @@ data class YouTubeClient(
             clientVersion = "1.61.48",
             clientId = "28",
             userAgent = "com.google.android.apps.youtube.vr.oculus/1.61.48 (Linux; U; Android 12; en_US; Oculus Quest 3; Build/SQ3A.220605.009.A1; Cronet/132.0.6808.3)",
-            loginSupported = false,
             useSignatureTimestamp = false
         )
 
@@ -144,7 +106,6 @@ data class YouTubeClient(
             cronetVersion = "132.0.6808.3",
             packageName = "com.google.android.apps.youtube.vr.oculus",
             friendlyName = "Android VR 1.61",
-            loginSupported = false,
             useSignatureTimestamp = false
         )
 
@@ -166,7 +127,6 @@ data class YouTubeClient(
             cronetVersion = "107.0.5284.2",
             packageName = "com.google.android.apps.youtube.vr.oculus",
             friendlyName = "Android VR 1.43",
-            loginSupported = false,
             useSignatureTimestamp = false
         )
 
@@ -188,25 +148,7 @@ data class YouTubeClient(
             cronetVersion = "132.0.6779.0",
             packageName = "com.google.android.apps.youtube.creator",
             friendlyName = "Android Studio",
-            loginSupported = true,
             useSignatureTimestamp = true
-        )
-
-        /**
-         * Internal YT client for an unreleased YT client. May stop working at any time.
-         */
-        val VISIONOS = YouTubeClient(
-            clientName = "VISIONOS",
-            clientVersion = "0.1",
-            clientId = "101",
-            userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
-            osName = "visionOS",
-            osVersion = "1.3.21O771",
-            deviceMake = "Apple",
-            deviceModel = "RealityDevice14,1",
-            friendlyName = "visionOS",
-            loginSupported = false,
-            useSignatureTimestamp = false
         )
 
         /**
@@ -232,7 +174,6 @@ data class YouTubeClient(
             deviceMake = "Apple",
             deviceModel = "iPad7,6",
             friendlyName = "iPadOS",
-            loginSupported = false,
             useSignatureTimestamp = false,
             packageName = "com.google.ios.youtube"
         )
