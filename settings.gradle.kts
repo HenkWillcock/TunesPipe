@@ -1,27 +1,17 @@
-import org.gradle.kotlin.dsl.maven
+@file:Suppress("UnstableApiUsage")
 
-pluginManagement {
-    repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
-        mavenCentral()
-        gradlePluginPortal()
-        maven(url = "https://jitpack.io")
-    }
-}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
     repositories {
         google()
         mavenCentral()
-        maven(url = "https://jitpack.io")
+        maven { setUrl("https://jitpack.io") }
     }
 }
 
 rootProject.name = "TunesPipe"
 include(":app")
+include(":innertube")
+include(":kugou")
+include(":lrclib")

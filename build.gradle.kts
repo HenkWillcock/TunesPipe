@@ -1,7 +1,33 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.ksp) apply false
-    id("androidx.navigation.safeargs.kotlin") version "2.7.7" apply false
+    alias(libs.plugins.hilt) apply (false)
+    alias(libs.plugins.kotlin.ksp) apply (false)
+}
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven { setUrl("https://jitpack.io") }
+    }
+    dependencies {
+        classpath(libs.gradle)
+        classpath(kotlin("gradle-plugin", libs.versions.kotlin.get()))
+    }
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
+}
+
+subprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            if (project.findProperty("enableComposeCompilerReports") == "true") {
+                arrayOf("reports", "metrics").forEach {
+                    freeCompilerArgs.add("-P")
+                    freeCompilerArgs.add("plugin:androidx.compose.compiler.plugins.kotlin:${it}Destination=${project.layout.buildDirectory}/compose_metrics")
+                }
+            }
+        }
+    }
 }
